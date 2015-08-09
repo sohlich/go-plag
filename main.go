@@ -1,34 +1,46 @@
 package main
 
 import (
-	"os"
-	"os/exec"
-
 	log "github.com/Sirupsen/logrus"
 	"github.com/gin-gonic/gin"
+
+	// "github.com/sohlich/go-plag/parser"
 )
 
-func main() {
-	file, fileErr := os.Open("/home/radek/Projekty/Java/Plag/PlagiarismDetection/JPlag/src/main/java/cz/fai/utb/java/api/CmdMain.java")
-	if fileErr != nil {
-		log.Error(fileErr)
-	}
-	subProcess := exec.Command("java", "-jar", "plugin/JPlag.jar")
-	subProcess.Stdin = file
-	bs, err := subProcess.Output()
-	if err != nil {
-		log.Error(err)
-	}
-	log.Println(string(bs))
+//Todo mongo string to config
+const (
+	mgoConnString string = "localhost:27017"
+)
 
+var engine *gin.Engine = gin.Default()
+var mongo *Mongo = &Mongo{
+	Database:             "plag",
+	AssignmentCollection: "assignments",
+	SubmissionCollection: "submissions",
 }
 
-func execJavaPlugin(input io.Reader, pluginPath string) (string, err) {
-	subProcess := exec.Command("java", "-jar", "plugin/JPlag.jar")
-	subProcess.Stdin = file
-	bs, err := subProcess.Output()
+func main() {
+	log.SetLevel(log.DebugLevel)
+
+	initGin(engine)
+	initStorage()
+
+	//Init db connection
+
+	log.Info("Executing server")
+	engine.Run("0.0.0.0:8080")
+}
+
+//Setup gin Engine server
+func initGin(ginEngine *gin.Engine) {
+
+	ginEngine.PUT("/assignment", putAssignment)
+	ginEngine.Use(gin.Logger())
+}
+
+func initStorage() {
+	err := mongo.OpenSession(mgoConnString)
 	if err != nil {
-		log.Error(err)
+		log.Fatal(err)
 	}
-	log.Println(string(bs))
 }

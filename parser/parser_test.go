@@ -1,7 +1,7 @@
 package parser
 
 import (
-	"encoding/json"1
+	"encoding/json"
 	"strings"
 	"testing"
 
@@ -22,8 +22,6 @@ func TestParseDocument(t *testing.T) {
 
 	log.Info(decodedDoc)
 }
-
-
 
 //Fake testing file for JAVA
 var fakeFile = `
