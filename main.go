@@ -35,6 +35,7 @@ func main() {
 func initGin(ginEngine *gin.Engine) {
 
 	ginEngine.PUT("/assignment", putAssignment)
+	ginEngine.PUT("/submission", putSubmission)
 	ginEngine.Use(gin.Logger())
 }
 

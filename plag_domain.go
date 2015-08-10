@@ -62,9 +62,13 @@ func (instance *Mongo) CloseSession() {
 
 func (instance *Mongo) Save(object MongoObject) (interface{}, error) {
 	var err error
+
+	object.NewId()
+
 	if _, ok := object.(*Assignment); ok {
-		object.NewId()
 		err = instance.assignments.Insert(object)
+	} else if _, ok := object.(*SubmissionFile); ok {
+		err = instance.submissions.Insert(object)
 	} else {
 		err = errors.New("Object not assignable")
 	}

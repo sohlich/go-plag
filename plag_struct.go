@@ -23,3 +23,21 @@ type Assignment struct {
 func (object *Assignment) NewId() {
 	object.ID = bson.NewObjectId()
 }
+
+type SubmissionFile struct {
+	ID         bson.ObjectId `bson:"_id"`
+	Submission string
+	Similarity float32
+	Content    string
+}
+
+func (object *SubmissionFile) NewId() {
+	object.ID = bson.NewObjectId()
+}
+
+//DTO for http
+
+type Submission struct {
+	AssignmentID string
+	Content      string //base64 file zip content
+}
