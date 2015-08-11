@@ -26,6 +26,7 @@ func (object *Assignment) NewId() {
 
 type SubmissionFile struct {
 	ID         bson.ObjectId `bson:"_id"`
+	Name       string
 	Submission string
 	Similarity float32
 	Content    string
