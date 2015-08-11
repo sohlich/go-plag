@@ -38,6 +38,8 @@ func (object *SubmissionFile) NewId() {
 //DTO for http
 
 type Submission struct {
+	ID           string
+	Owner        string
 	AssignmentID string
-	Content      string //base64 file zip content
+	Content      []byte //base64 file zip content
 }
