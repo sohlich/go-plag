@@ -24,6 +24,8 @@ func (object *Assignment) NewId() {
 	object.ID = bson.NewObjectId()
 }
 
+//Files from uploaded zipped file
+//for submission
 type SubmissionFile struct {
 	ID         bson.ObjectId `bson:"_id"`
 	Name       string
@@ -37,7 +39,6 @@ func (object *SubmissionFile) NewId() {
 }
 
 //DTO for http
-
 type Submission struct {
 	ID           string
 	Owner        string

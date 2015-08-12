@@ -7,6 +7,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/gin-gonic/gin"
+	// "gopkg.in/mgo.v2/bson"
 )
 
 func putAssignment(ctx *gin.Context) {
@@ -31,12 +32,16 @@ func putSubmission(ctx *gin.Context) {
 	if notifyError(err, ctx) {
 		return
 	}
-
 	//Decode metadata
 	decoder := json.NewDecoder(strings.NewReader(meta))
 	submission := &Submission{}
 	decoder.Decode(submission)
-	log.Info(submission)
+
+	log.Info(submission.AssignmentID)
+	_, err = mongo.FindOneAssignment(submission.AssignmentID)
+	if notifyError(err, ctx) {
+		return
+	}
 
 	//Read content and append to entity
 	fileContent, fError := ioutil.ReadAll(file)
@@ -44,6 +49,7 @@ func putSubmission(ctx *gin.Context) {
 		return
 	}
 	submission.Content = fileContent
+	processSubmission(submission)
 }
 
 func notifyError(err error, ctx *gin.Context) bool {

@@ -4,7 +4,7 @@ import (
 	"errors"
 	log "github.com/Sirupsen/logrus"
 	"gopkg.in/mgo.v2"
-	//"gopkg.in/mgo.v2/bson"
+	"gopkg.in/mgo.v2/bson"
 	"gopkg.in/validator.v2"
 )
 
@@ -74,4 +74,13 @@ func (instance *Mongo) Save(object MongoObject) (interface{}, error) {
 	}
 
 	return object, err
+}
+
+func (instance *Mongo) FindOneAssignment(id string) (*Assignment, error) {
+	assignment := &Assignment{}
+	err := instance.assignments.FindId(bson.ObjectIdHex(id)).One(assignment)
+	if err != nil {
+		return nil, err
+	}
+	return assignment, err
 }
