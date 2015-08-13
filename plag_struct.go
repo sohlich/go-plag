@@ -43,5 +43,6 @@ type Submission struct {
 	ID           string
 	Owner        string
 	AssignmentID string
+	Lang         string
 	Content      []byte //base64 file zip content
 }

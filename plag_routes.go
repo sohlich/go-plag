@@ -38,10 +38,11 @@ func putSubmission(ctx *gin.Context) {
 	decoder.Decode(submission)
 
 	log.Info(submission.AssignmentID)
-	_, err = mongo.FindOneAssignment(submission.AssignmentID)
-	if notifyError(err, ctx) {
+	assignment, mgoErr := mongo.FindOneAssignment(submission.AssignmentID)
+	if notifyError(mgoErr, ctx) {
 		return
 	}
+	submission.Lang = string(assignment.Lang)
 
 	//Read content and append to entity
 	fileContent, fError := ioutil.ReadAll(file)

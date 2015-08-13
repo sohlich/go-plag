@@ -7,20 +7,33 @@ import (
 	"sync"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/satori/go.uuid"
+	"github.com/sohlich/go-plag/parser"
 )
 
-func processSubmission(submission *Submission) {
+func processSubmission(submission *Submission) error {
 
 	sChan, err := unzipFile(submission.Content)
 
 	if err != nil {
-		return
+		return err
 	}
 
+	//Generate new submission
+	//Id for group of files
+	//and save the files
+	submissionID := uuid.NewV1().String()
 	for submissionFile := range sChan {
-		submissionFile.Submission = submission.AssignmentID
+		submissionFile.Submission = submissionID
+		tokContent, err := parser.TokenizeContent(submissionFile.Content, submission.Lang)
+		if err != nil {
+			return err
+		}
+		submissionFile.Content = tokContent
 		mongo.Save(submissionFile)
 	}
+
+	return nil
 }
 
 //Unzipt the files in parallel

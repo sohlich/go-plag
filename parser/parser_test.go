@@ -23,7 +23,6 @@ func TestParseDocument(t *testing.T) {
 	log.Info(decodedDoc)
 }
 
-//Fake testing file for JAVA
 var fakeFile = `
 import com.google.gson.Gson;
 import cz.fai.utb.lang.api.ParseResultWrapper;
@@ -38,11 +37,11 @@ import java.io.InputStreamReader;
 public class CmdMain {
 
     private static final JavaProcessor processor = new JavaProcessor();
-    
+
     public static void main(String[] args) {
         StringBuilder inputAppender = new StringBuilder();
         try {
-            BufferedReader br 
+            BufferedReader br
                     = new BufferedReader(new InputStreamReader(System.in));
             String input;
             while ((input = br.readLine()) != null) {
@@ -53,8 +52,10 @@ public class CmdMain {
             System.out.println(new Gson().toJson(wrapper));
 
         } catch (IOException io) {
-            
+
         }
     }
 }
 `
+
+//Fake testing file for JAVA
