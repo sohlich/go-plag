@@ -9,6 +9,8 @@ import (
 )
 
 func TestParseDocument(t *testing.T) {
+	plugins["java"] = "../plugin/JPlag.jar" //redefine path to plugin
+
 	input := strings.NewReader(fakeFile)
 	pluginLang := "java"
 	output, err := execJavaPlugin(input, pluginLang)
@@ -23,6 +25,7 @@ func TestParseDocument(t *testing.T) {
 	log.Info(decodedDoc)
 }
 
+//Fake testing file for JAVA
 var fakeFile = `
 import com.google.gson.Gson;
 import cz.fai.utb.lang.api.ParseResultWrapper;
@@ -57,5 +60,3 @@ public class CmdMain {
     }
 }
 `
-
-//Fake testing file for JAVA

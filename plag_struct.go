@@ -32,6 +32,7 @@ type SubmissionFile struct {
 	Submission string
 	Similarity float32
 	Content    string
+	Tokens     []string
 }
 
 func (object *SubmissionFile) NewId() {

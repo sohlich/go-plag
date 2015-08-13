@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"os/exec"
@@ -21,9 +22,17 @@ func (err *NoSuchPluginError) Error() string {
 	return fmt.Sprintf("Plugin for language %s does not exist", err.Lang)
 }
 
-func TokenizeContent(content, lang string) (string, error) {
+func TokenizeContent(content, lang string) (*NGramDoc, error) {
 	reader := strings.NewReader(content)
-	return execJavaPlugin(reader, lang)
+	out, err := execJavaPlugin(reader, lang)
+	if err != nil {
+		return nil, err
+	}
+	decodedDoc := &NGramDoc{}
+	decoder := json.NewDecoder(strings.NewReader(out))
+	decoder.Decode(decodedDoc)
+
+	return decodedDoc, nil
 }
 
 func execJavaPlugin(input io.Reader, pluginLanguage string) (string, error) {

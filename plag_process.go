@@ -29,7 +29,7 @@ func processSubmission(submission *Submission) error {
 		if err != nil {
 			return err
 		}
-		submissionFile.Content = tokContent
+		submissionFile.Tokens = tokContent.NGrams
 		mongo.Save(submissionFile)
 	}
 
