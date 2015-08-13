@@ -2,7 +2,6 @@ package parser
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"os/exec"
 	"strings"
@@ -10,19 +9,13 @@ import (
 	log "github.com/Sirupsen/logrus"
 )
 
+//Map with plugin paths
 var plugins map[string]string = map[string]string{
 	"java": "plugin/JPlag.jar",
 }
 
-type NoSuchPluginError struct {
-	Lang string
-}
-
-func (err *NoSuchPluginError) Error() string {
-	return fmt.Sprintf("Plugin for language %s does not exist", err.Lang)
-}
-
-func TokenizeContent(content, lang string) (*NGramDoc, error) {
+//Tokenize document via java plugins
+func TokenizeContent(content, lang string) ([]uint32, error) {
 	reader := strings.NewReader(content)
 	out, err := execJavaPlugin(reader, lang)
 	if err != nil {
@@ -32,9 +25,16 @@ func TokenizeContent(content, lang string) (*NGramDoc, error) {
 	decoder := json.NewDecoder(strings.NewReader(out))
 	decoder.Decode(decodedDoc)
 
-	return decodedDoc, nil
+	hashes := make([]uint32, 0)
+	for _, ngram := range decodedDoc.NGrams {
+		hashes = append(hashes, hash(ngram))
+	}
+
+	return hashes, nil
 }
 
+//Executes java plugin based
+//on assignment language
 func execJavaPlugin(input io.Reader, pluginLanguage string) (string, error) {
 	path := plugins[pluginLanguage]
 	if path == "" {
