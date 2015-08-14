@@ -25,12 +25,20 @@ func TokenizeContent(content, lang string) ([]uint32, error) {
 	decoder := json.NewDecoder(strings.NewReader(out))
 	decoder.Decode(decodedDoc)
 
+	//Create hashes from token strings
 	hashes := make([]uint32, 0)
 	for _, ngram := range decodedDoc.NGrams {
 		hashes = append(hashes, hash(ngram))
 	}
 
-	return hashes, nil
+	log.Infof("Array of hashes\n%s", hashes)
+
+	//Run through winnowing
+	winnowing := Winnowing{4}
+	fp, err := winnowing.processTokensToFingerPrint(hashes)
+	log.Infof("Array of hashes\n%s", fp.FingerPrint)
+
+	return fp.FingerPrint, err
 }
 
 //Executes java plugin based
@@ -40,7 +48,7 @@ func execJavaPlugin(input io.Reader, pluginLanguage string) (string, error) {
 	if path == "" {
 		return path, &NoSuchPluginError{pluginLanguage}
 	}
-	log.Info(path)
+	log.Debugf("Path for plugin %s", path)
 	subProcess := exec.Command("java", "-jar", path)
 	subProcess.Stdin = input
 	bs, err := subProcess.Output()

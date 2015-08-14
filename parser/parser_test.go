@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	log "github.com/Sirupsen/logrus"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestParseDocument(t *testing.T) {
@@ -21,8 +21,9 @@ func TestParseDocument(t *testing.T) {
 
 	decodedDoc := NGramDoc{}
 	decoder.Decode(&decodedDoc)
-
-	log.Info(decodedDoc)
+	if !assert.True(t, len(decodedDoc.NGrams) != 0 && len(decodedDoc.Metrics) != 0) {
+		t.Error("TestParseDocument - no output from plugin")
+	}
 }
 
 //Fake testing file for JAVA
