@@ -24,7 +24,7 @@ func TestFileUzip(t *testing.T) {
 		count++
 	}
 
-	if count != 10 {
+	if count != 9 {
 		t.Error("Function do not unzip all files")
 	}
 }
