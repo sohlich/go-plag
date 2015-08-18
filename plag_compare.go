@@ -5,6 +5,7 @@ import (
 	"github.com/sohlich/go-plag/parser"
 )
 
+//TODO implement assignment check
 func checkAssignment(assignment *Assignment) {
 	//Obtain all assignment files
 	// submissionFiles, err := mongo.FindAllSubmissionsByAssignment(assignment.ID.Hex())
@@ -14,6 +15,8 @@ func checkAssignment(assignment *Assignment) {
 	// }
 }
 
+//Generates non-repeating
+//tuples from give array
 func generateTuples(files []SubmissionFile) <-chan OutputComparisonResult {
 	output := make(chan OutputComparisonResult, 10)
 	go func(chan OutputComparisonResult) {
