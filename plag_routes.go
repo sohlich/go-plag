@@ -38,7 +38,7 @@ func putSubmission(ctx *gin.Context) {
 	decoder.Decode(submission)
 
 	log.Info(submission.AssignmentID)
-	assignment, mgoErr := mongo.FindOneAssignment(submission.AssignmentID)
+	assignment, mgoErr := mongo.FindOneAssignmentById(submission.AssignmentID)
 	if notifyError(mgoErr, ctx) {
 		return
 	}

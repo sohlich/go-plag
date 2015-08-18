@@ -21,7 +21,7 @@ type FingerPrintAlgorithm interface {
 }
 
 type FingerPrintComparator interface {
-	compare([]uint32, []uint32) (float32, error)
+	Compare([]uint32, []uint32) (float32, error)
 }
 
 //Winnowing algorithm to fingerprint documents
@@ -62,7 +62,7 @@ var Jaccard *jaccardIndexComparator = &jaccardIndexComparator{}
 
 type jaccardIndexComparator struct{}
 
-func (j *jaccardIndexComparator) compare(mapA map[uint32]int, mapB map[uint32]int) float32 {
+func (j *jaccardIndexComparator) Compare(mapA map[string]int, mapB map[string]int) float32 {
 
 	//Compute intersection
 	intrSec := 0

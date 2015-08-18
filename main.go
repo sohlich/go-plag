@@ -3,8 +3,6 @@ package main
 import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/gin-gonic/gin"
-
-	// "github.com/sohlich/go-plag/parser"
 )
 
 //Todo mongo string to config
@@ -13,20 +11,19 @@ const (
 )
 
 var engine *gin.Engine = gin.Default()
-var mongo *Mongo = &Mongo{
+var mongo DataStorage = &Mongo{
 	Database:             "plag",
 	AssignmentCollection: "assignments",
 	SubmissionCollection: "submissions",
 }
 
 func main() {
-	log.SetLevel(log.DebugLevel)
+	//log.SetLevel(log.DebugLevel)
 
 	initGin(engine)
 	initStorage()
 
 	//Init db connection
-
 	log.Info("Executing server")
 	engine.Run("0.0.0.0:8080")
 }

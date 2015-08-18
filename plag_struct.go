@@ -10,6 +10,13 @@ const (
 	JAVA Language = "java"
 )
 
+//
+// const (
+// 	NEW    string = "new"
+// 	CLOSED string = "closed"
+// 	SYNCED string = "synced"
+// )
+
 type MongoObject interface {
 	NewId()
 }
@@ -18,6 +25,7 @@ type Assignment struct {
 	ID   bson.ObjectId `bson:"_id"`
 	Name string
 	Lang Language
+	// State string
 }
 
 func (object *Assignment) NewId() {
@@ -29,10 +37,12 @@ func (object *Assignment) NewId() {
 type SubmissionFile struct {
 	ID         bson.ObjectId `bson:"_id"`
 	Name       string
+	Assignment string
 	Submission string
 	Similarity float32
 	Content    string
 	Tokens     []uint32
+	TokenMap   map[string]int
 }
 
 func (object *SubmissionFile) NewId() {
@@ -46,4 +56,10 @@ type Submission struct {
 	AssignmentID string
 	Lang         string
 	Content      []byte //base64 file zip content
+}
+
+//DTO for fileComparison
+type OutputComparisonResult struct {
+	Files           []string
+	SimilarityIndex float32
 }

@@ -11,7 +11,11 @@ import (
 type DataStorage interface {
 	OpenSession(url string) error
 	CloseSession()
-	Save(interface{}) (interface{}, error)
+	Save(MongoObject) (interface{}, error)
+	FindSubmissionFileById(id string) (*SubmissionFile, error)
+	FindOneAssignmentById(id string) (*Assignment, error)
+	FindAllSubmissionsByAssignment(assignmentId string) ([]SubmissionFile, error)
+	FindAllComparableSubmissionFiles(submissionfile *SubmissionFile) ([]SubmissionFile, error)
 }
 
 type Mongo struct {
@@ -25,7 +29,7 @@ type Mongo struct {
 
 //Opens mongo session for given url and
 //sets the session to global property
-func (instance *Mongo) OpenSession(url string) error {
+func (m *Mongo) OpenSession(url string) error {
 	log.Info("")
 	log.Infof(`Initializing MongoDB
 		Connection string %s
@@ -33,42 +37,42 @@ func (instance *Mongo) OpenSession(url string) error {
 		Assignment collection: %s
 		Submission collection: %s`,
 		url,
-		instance.Database,
-		instance.AssignmentCollection,
-		instance.SubmissionCollection)
+		m.Database,
+		m.AssignmentCollection,
+		m.SubmissionCollection)
 
-	validErr := validator.Validate(instance)
+	validErr := validator.Validate(m)
 
 	if validErr != nil {
 		return &InitError{"Collection names Empty", validErr}
 	}
 
 	mongo, connError := mgo.Dial(url)
-	instance.mongoSession = mongo
+	m.mongoSession = mongo
 	if connError != nil {
 		return &InitError{"Connection failed", connError}
 	}
 
-	db := mongo.DB(instance.Database)
-	instance.assignments = db.C(instance.AssignmentCollection)
-	instance.submissions = db.C(instance.SubmissionCollection)
+	db := mongo.DB(m.Database)
+	m.assignments = db.C(m.AssignmentCollection)
+	m.submissions = db.C(m.SubmissionCollection)
 	return nil
 }
 
 //Silently close mongo session
-func (instance *Mongo) CloseSession() {
-	instance.mongoSession.Close()
+func (m *Mongo) CloseSession() {
+	m.mongoSession.Close()
 }
 
-func (instance *Mongo) Save(object MongoObject) (interface{}, error) {
+func (m *Mongo) Save(object MongoObject) (interface{}, error) {
 	var err error
 
 	object.NewId()
 
 	if _, ok := object.(*Assignment); ok {
-		err = instance.assignments.Insert(object)
+		err = m.assignments.Insert(object)
 	} else if _, ok := object.(*SubmissionFile); ok {
-		err = instance.submissions.Insert(object)
+		err = m.submissions.Insert(object)
 	} else {
 		err = errors.New("Object not assignable")
 	}
@@ -76,11 +80,32 @@ func (instance *Mongo) Save(object MongoObject) (interface{}, error) {
 	return object, err
 }
 
-func (instance *Mongo) FindOneAssignment(id string) (*Assignment, error) {
+func (m *Mongo) FindOneAssignmentById(id string) (*Assignment, error) {
 	assignment := &Assignment{}
-	err := instance.assignments.FindId(bson.ObjectIdHex(id)).One(assignment)
+	err := m.assignments.FindId(bson.ObjectIdHex(id)).One(assignment)
 	if err != nil {
 		return nil, err
 	}
 	return assignment, err
+}
+
+func (m *Mongo) FindSubmissionFileById(id string) (*SubmissionFile, error) {
+	sFile := &SubmissionFile{}
+	err := m.submissions.FindId(bson.ObjectIdHex(id)).One(sFile)
+	if err != nil {
+		return nil, err
+	}
+	return sFile, err
+}
+
+func (m *Mongo) FindAllSubmissionsByAssignment(assignmentId string) ([]SubmissionFile, error) {
+	var result []SubmissionFile
+	err := m.submissions.Find(bson.M{"assignment": assignmentId}).All(&result)
+	return result, err
+}
+
+func (m *Mongo) FindAllComparableSubmissionFiles(submissionF *SubmissionFile) ([]SubmissionFile, error) {
+	var result []SubmissionFile
+	err := m.submissions.Find(bson.M{"$and": []bson.M{bson.M{"assignment": submissionF.Assignment}, bson.M{"submission": bson.M{"$ne": submissionF.Submission}}}}).All(&result)
+	return result, err
 }

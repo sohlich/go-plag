@@ -32,7 +32,7 @@ func TestJaccard(t *testing.T) {
 		uint32(10): 1,
 	}
 
-	result := Jaccard.compare(mapA, mapB)
+	result := Jaccard.Compare(mapA, mapB)
 
 	assert.EqualValues(t, float32(1)/float32(4), result, float64(0.0001))
 }

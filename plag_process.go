@@ -11,10 +11,10 @@ import (
 	"github.com/sohlich/go-plag/parser"
 )
 
+//Process the submission that comes from api,
+//unzip, parse and save to database.
 func processSubmission(submission *Submission) error {
-
 	sChan, err := unzipFile(submission.Content)
-
 	if err != nil {
 		return err
 	}
@@ -25,14 +25,15 @@ func processSubmission(submission *Submission) error {
 	submissionID := uuid.NewV1().String()
 	for submissionFile := range sChan {
 		submissionFile.Submission = submissionID
-		tokContent, err := parser.TokenizeContent(submissionFile.Content, submission.Lang)
+		tokContent, tokMap, err := parser.TokenizeContent(submissionFile.Content, submission.Lang)
 		if err != nil {
 			return err
 		}
+		submissionFile.TokenMap = tokMap
 		submissionFile.Tokens = tokContent
+		submissionFile.Assignment = submission.AssignmentID
 		mongo.Save(submissionFile)
 	}
-
 	return nil
 }
 
