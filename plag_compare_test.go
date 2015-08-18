@@ -88,5 +88,10 @@ func TestGenerateTuples(t *testing.T) {
 	mongo = &FakeDataStorage{}
 	defer func(s DataStorage) { mongo = s }(oldMongo)
 
-	checkAssignment(&Assignment{})
+	files, _ := mongo.FindAllSubmissionsByAssignment("")
+	outChan := generateTuples(files)
+
+	for out := range outChan {
+		log.Debugln(out)
+	}
 }

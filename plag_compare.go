@@ -7,26 +7,27 @@ import (
 
 func checkAssignment(assignment *Assignment) {
 	//Obtain all assignment files
-	submissionFiles, err := mongo.FindAllSubmissionsByAssignment(assignment.ID.Hex())
-	if err != nil {
-		log.Error(err)
-		return
-	}
+	// submissionFiles, err := mongo.FindAllSubmissionsByAssignment(assignment.ID.Hex())
+	// if err != nil {
+	// 	log.Error(err)
+	// 	return
+	// }
+}
 
-	output := make([]OutputComparisonResult, 0)
-
-	for i := 0; i < len(submissionFiles); i++ {
-		for j := i + 1; j < len(submissionFiles); j++ {
-			tuple := OutputComparisonResult{
-				Files: []string{submissionFiles[i].ID.Hex(), submissionFiles[j].ID.Hex()},
+func generateTuples(files []SubmissionFile) <-chan OutputComparisonResult {
+	output := make(chan OutputComparisonResult, 10)
+	go func(chan OutputComparisonResult) {
+		for i := 0; i < len(files); i++ {
+			for j := i + 1; j < len(files); j++ {
+				tuple := OutputComparisonResult{
+					Files: []string{files[i].ID.Hex(), files[j].ID.Hex()},
+				}
+				output <- tuple
 			}
-			output = append(output, tuple)
 		}
-	}
-
-	for _, out := range output {
-		log.Debugln(out)
-	}
+		close(output)
+	}(output)
+	return output
 }
 
 //Receives OutputComparisonResult
