@@ -1,6 +1,8 @@
 package main
 
 import (
+	"runtime"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/gin-gonic/gin"
 )
@@ -15,9 +17,11 @@ var mongo DataStorage = &Mongo{
 	Database:             "plag",
 	AssignmentCollection: "assignments",
 	SubmissionCollection: "submissions",
+	ResultCollection:     "results",
 }
 
 func main() {
+	runtime.GOMAXPROCS(runtime.NumCPU())
 	//log.SetLevel(log.DebugLevel)
 
 	initGin(engine)

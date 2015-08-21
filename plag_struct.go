@@ -60,6 +60,11 @@ type Submission struct {
 
 //DTO for fileComparison
 type OutputComparisonResult struct {
+	ID              bson.ObjectId `bson:"_id"`
 	Files           []string
 	SimilarityIndex float32
+}
+
+func (object *OutputComparisonResult) NewId() {
+	object.ID = bson.NewObjectId()
 }

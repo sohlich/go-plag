@@ -34,6 +34,8 @@ func putSubmission(ctx *gin.Context) {
 	}
 	//Decode metadata
 	decoder := json.NewDecoder(strings.NewReader(meta))
+
+	//Start assembling
 	submission := &Submission{}
 	decoder.Decode(submission)
 
@@ -50,7 +52,12 @@ func putSubmission(ctx *gin.Context) {
 		return
 	}
 	submission.Content = fileContent
-	processSubmission(submission)
+
+	//Launch Goroutine to process submission
+	go func(sub *Submission, assGnmnt *Assignment) {
+		processSubmission(sub)
+		checkAssignment(assGnmnt)
+	}(submission, assignment)
 }
 
 func notifyError(err error, ctx *gin.Context) bool {

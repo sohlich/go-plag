@@ -1,6 +1,9 @@
 package main
 
 import (
+	// "runtime"
+	// "sync"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/sohlich/go-plag/parser"
 )
@@ -8,20 +11,35 @@ import (
 //TODO implement assignment check
 func checkAssignment(assignment *Assignment) {
 	//Obtain all assignment files
-	// submissionFiles, err := mongo.FindAllSubmissionsByAssignment(assignment.ID.Hex())
-	// if err != nil {
-	// 	log.Error(err)
-	// 	return
-	// }
+	submissionFiles, err := mongo.FindAllSubmissionsByAssignment(assignment.ID.Hex())
+	if err != nil {
+		log.Error(err)
+		return
+	}
+	processChanel := generateTuples(submissionFiles)
+	outpuchannel := compareFiles(processChanel)
+
+	for item := range outpuchannel {
+		go func(comparison OutputComparisonResult) {
+			_, err := mongo.Save(&comparison)
+			if err != nil {
+				log.Error(err)
+			}
+		}(item)
+	}
 }
 
 //Generates non-repeating
 //tuples from give array
 func generateTuples(files []SubmissionFile) <-chan OutputComparisonResult {
-	output := make(chan OutputComparisonResult, 10)
+	output := make(chan OutputComparisonResult)
 	go func(chan OutputComparisonResult) {
 		for i := 0; i < len(files); i++ {
 			for j := i + 1; j < len(files); j++ {
+				//Do not compare files form same submission
+				if files[i].Submission == files[j].Submission {
+					continue
+				}
 				tuple := OutputComparisonResult{
 					Files: []string{files[i].ID.Hex(), files[j].ID.Hex()},
 				}
@@ -37,7 +55,7 @@ func generateTuples(files []SubmissionFile) <-chan OutputComparisonResult {
 //from channel and return an output channel
 //with filled entity with comparison result
 func compareFiles(inputChannel <-chan OutputComparisonResult) <-chan OutputComparisonResult {
-	outputChannel := make(chan OutputComparisonResult, 10)
+	outputChannel := make(chan OutputComparisonResult)
 	go func(inChan <-chan OutputComparisonResult) {
 		for toCompare := range inChan {
 			log.Debugf("Starting to compare {}", toCompare.Files[0])
@@ -54,6 +72,7 @@ func compareFiles(inputChannel <-chan OutputComparisonResult) <-chan OutputCompa
 			toCompare.SimilarityIndex = parser.Jaccard.Compare(sbmsnOne.TokenMap, sbmsnTwo.TokenMap)
 			outputChannel <- toCompare
 		}
+		close(outputChannel)
 	}(inputChannel)
 
 	return outputChannel

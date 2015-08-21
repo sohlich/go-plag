@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"testing"
 
 	log "github.com/Sirupsen/logrus"
@@ -47,7 +46,7 @@ func (m *FakeDataStorage) FindSubmissionFileById(id string) (*SubmissionFile, er
 		return fileTwo, nil
 	}
 
-	return nil, errors.New("No such file")
+	return fileOne, nil
 }
 
 func (f *FakeDataStorage) FindAllSubmissionsByAssignment(assignmentId string) ([]SubmissionFile, error) {
@@ -91,7 +90,20 @@ func TestGenerateTuples(t *testing.T) {
 	files, _ := mongo.FindAllSubmissionsByAssignment("")
 	outChan := generateTuples(files)
 
+	count := 0
 	for out := range outChan {
-		log.Debugln(out)
+		log.Infoln(out)
+		count++
 	}
+	if count != 10 {
+		t.Errorf("The processing do not completed task")
+	}
+}
+
+func TestCheckAssignmentPipeline(t *testing.T) {
+	oldMongo := mongo
+	mongo = &FakeDataStorage{}
+	defer func(s DataStorage) { mongo = s }(oldMongo)
+	assignment := &Assignment{ID: bson.NewObjectId()}
+	checkAssignment(assignment)
 }

@@ -22,9 +22,11 @@ type Mongo struct {
 	Database             string `validate:"nonzero"`
 	AssignmentCollection string `validate:"nonzero"`
 	SubmissionCollection string `validate:"nonzero"`
+	ResultCollection     string `validate:"nonzero"`
 	mongoSession         *mgo.Session
 	assignments          *mgo.Collection
 	submissions          *mgo.Collection
+	results              *mgo.Collection
 }
 
 //Opens mongo session for given url and
@@ -56,6 +58,7 @@ func (m *Mongo) OpenSession(url string) error {
 	db := mongo.DB(m.Database)
 	m.assignments = db.C(m.AssignmentCollection)
 	m.submissions = db.C(m.SubmissionCollection)
+	m.results = db.C(m.ResultCollection)
 	return nil
 }
 
@@ -73,11 +76,17 @@ func (m *Mongo) Save(object MongoObject) (interface{}, error) {
 		err = m.assignments.Insert(object)
 	} else if _, ok := object.(*SubmissionFile); ok {
 		err = m.submissions.Insert(object)
+	} else if _, ok := object.(*OutputComparisonResult); ok {
+		err = m.results.Insert(object)
 	} else {
 		err = errors.New("Object not assignable")
 	}
 
 	return object, err
+}
+
+func (m *Mongo) UpdateSimilarityForSubmissionFile() {
+
 }
 
 func (m *Mongo) FindOneAssignmentById(id string) (*Assignment, error) {
