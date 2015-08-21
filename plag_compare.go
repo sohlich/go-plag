@@ -9,24 +9,27 @@ import (
 )
 
 //TODO implement assignment check
-func checkAssignment(assignment *Assignment) {
+func checkAssignment(assignment *Assignment) int {
 	//Obtain all assignment files
 	submissionFiles, err := mongo.FindAllSubmissionsByAssignment(assignment.ID.Hex())
 	if err != nil {
 		log.Error(err)
-		return
+		return 0
 	}
 	processChanel := generateTuples(submissionFiles)
 	outpuchannel := compareFiles(processChanel)
 
-	for item := range outpuchannel {
-		go func(comparison OutputComparisonResult) {
-			_, err := mongo.Save(&comparison)
-			if err != nil {
-				log.Error(err)
-			}
-		}(item)
+	compCount := 0
+	for comparison := range outpuchannel {
+		compCount++
+		// go func(comparison OutputComparisonResult) {
+		_, err := mongo.Save(&comparison)
+		if err != nil {
+			log.Error(err)
+		}
+		// }(item)
 	}
+	return compCount
 }
 
 //Generates non-repeating

@@ -32,6 +32,7 @@ func (m *FakeDataStorage) FindOneAssignmentById(id string) (*Assignment, error) 
 
 func (m *FakeDataStorage) FindSubmissionFileById(id string) (*SubmissionFile, error) {
 	fileOne := &SubmissionFile{
+
 		TokenMap: map[string]int{"1": 2, "5": 3},
 	}
 
@@ -52,11 +53,11 @@ func (m *FakeDataStorage) FindSubmissionFileById(id string) (*SubmissionFile, er
 func (f *FakeDataStorage) FindAllSubmissionsByAssignment(assignmentId string) ([]SubmissionFile, error) {
 
 	return []SubmissionFile{
-		SubmissionFile{ID: bson.NewObjectId()},
-		SubmissionFile{ID: bson.NewObjectId()},
-		SubmissionFile{ID: bson.NewObjectId()},
-		SubmissionFile{ID: bson.NewObjectId()},
-		SubmissionFile{ID: bson.NewObjectId()},
+		SubmissionFile{Submission: "1", ID: bson.NewObjectId()},
+		SubmissionFile{Submission: "2", ID: bson.NewObjectId()},
+		SubmissionFile{Submission: "3", ID: bson.NewObjectId()},
+		SubmissionFile{Submission: "4", ID: bson.NewObjectId()},
+		SubmissionFile{Submission: "5", ID: bson.NewObjectId()},
 	}, nil
 }
 
@@ -65,6 +66,7 @@ func (f *FakeDataStorage) FindAllComparableSubmissionFiles(submissionfile *Submi
 }
 
 func TestCompareFiles(t *testing.T) {
+	log.SetLevel(log.DebugLevel)
 	log.Debugln("TestCompareFiles")
 	oldMongo := mongo
 	mongo = &FakeDataStorage{}
@@ -81,8 +83,7 @@ func TestCompareFiles(t *testing.T) {
 }
 
 func TestGenerateTuples(t *testing.T) {
-	log.SetLevel(log.DebugLevel)
-	log.Debugln("TestCompareFiles")
+	log.Debugln("TestGenerateTuples")
 	oldMongo := mongo
 	mongo = &FakeDataStorage{}
 	defer func(s DataStorage) { mongo = s }(oldMongo)
@@ -95,9 +96,7 @@ func TestGenerateTuples(t *testing.T) {
 		log.Infoln(out)
 		count++
 	}
-	if count != 10 {
-		t.Errorf("The processing do not completed task")
-	}
+	assert.Equal(t, 10, count, "Did not comapred all files")
 }
 
 func TestCheckAssignmentPipeline(t *testing.T) {
@@ -105,5 +104,6 @@ func TestCheckAssignmentPipeline(t *testing.T) {
 	mongo = &FakeDataStorage{}
 	defer func(s DataStorage) { mongo = s }(oldMongo)
 	assignment := &Assignment{ID: bson.NewObjectId()}
-	checkAssignment(assignment)
+	compCount := checkAssignment(assignment)
+	assert.True(t, compCount > 0, "No files were compared")
 }
