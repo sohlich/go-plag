@@ -2,6 +2,8 @@ package main
 
 import (
 	"errors"
+	// "fmt"
+
 	log "github.com/Sirupsen/logrus"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
@@ -27,6 +29,7 @@ type Mongo struct {
 	assignments          *mgo.Collection
 	submissions          *mgo.Collection
 	results              *mgo.Collection
+	db                   *mgo.Database
 }
 
 //Opens mongo session for given url and
@@ -55,10 +58,10 @@ func (m *Mongo) OpenSession(url string) error {
 		return &InitError{"Connection failed", connError}
 	}
 
-	db := mongo.DB(m.Database)
-	m.assignments = db.C(m.AssignmentCollection)
-	m.submissions = db.C(m.SubmissionCollection)
-	m.results = db.C(m.ResultCollection)
+	m.db = mongo.DB(m.Database)
+	m.assignments = m.db.C(m.AssignmentCollection)
+	m.submissions = m.db.C(m.SubmissionCollection)
+	m.results = m.db.C(m.ResultCollection)
 	return nil
 }
 
@@ -76,8 +79,8 @@ func (m *Mongo) Save(object MongoObject) (interface{}, error) {
 		err = m.assignments.Insert(object)
 	} else if _, ok := object.(*SubmissionFile); ok {
 		err = m.submissions.Insert(object)
-	} else if _, ok := object.(*OutputComparisonResult); ok {
-		err = m.results.Insert(object)
+	} else if comparison, ok := object.(*OutputComparisonResult); ok {
+		err = m.updateSimilarityResults(comparison)
 	} else {
 		err = errors.New("Object not assignable")
 	}
@@ -85,8 +88,24 @@ func (m *Mongo) Save(object MongoObject) (interface{}, error) {
 	return object, err
 }
 
-func (m *Mongo) UpdateSimilarityForSubmissionFile() {
+func (m *Mongo) updateSimilarityResults(comparison *OutputComparisonResult) error {
+	file1Query := bson.M{"_id": comparison.Files[0]}
+	file1Pull := bson.M{"$pull": bson.M{"similarities": bson.M{"id": comparison.Files[1]}}}
+	file1Update := bson.M{"$push": bson.M{"similarities": bson.M{"id": comparison.Files[1], "val": comparison.SimilarityIndex}}}
 
+	//TODO do in single call after bulk upsert available
+	_, err := m.results.Upsert(file1Query, file1Pull)
+	_, err = m.results.Upsert(file1Query, file1Update)
+
+	file2Query := bson.M{"_id": comparison.Files[1]}
+	file2Pull := bson.M{"$pull": bson.M{"similarities": bson.M{"id": comparison.Files[0]}}}
+	file2Update := bson.M{"$push": bson.M{"similarities": bson.M{"id": comparison.Files[0], "val": comparison.SimilarityIndex}}}
+
+	//TODO do in single call after bulk upsert available
+	_, err = m.results.Upsert(file2Query, file2Pull)
+	_, err = m.results.Upsert(file2Query, file2Update)
+
+	return err
 }
 
 func (m *Mongo) FindOneAssignmentById(id string) (*Assignment, error) {

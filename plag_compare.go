@@ -22,12 +22,10 @@ func checkAssignment(assignment *Assignment) int {
 	compCount := 0
 	for comparison := range outpuchannel {
 		compCount++
-		// go func(comparison OutputComparisonResult) {
 		_, err := mongo.Save(&comparison)
 		if err != nil {
 			log.Error(err)
 		}
-		// }(item)
 	}
 	return compCount
 }
@@ -37,6 +35,7 @@ func checkAssignment(assignment *Assignment) int {
 func generateTuples(files []SubmissionFile) <-chan OutputComparisonResult {
 	output := make(chan OutputComparisonResult)
 	go func(chan OutputComparisonResult) {
+		defer close(output)
 		for i := 0; i < len(files); i++ {
 			for j := i + 1; j < len(files); j++ {
 				//Do not compare files form same submission
@@ -49,7 +48,6 @@ func generateTuples(files []SubmissionFile) <-chan OutputComparisonResult {
 				output <- tuple
 			}
 		}
-		close(output)
 	}(output)
 	return output
 }

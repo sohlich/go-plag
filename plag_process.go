@@ -56,7 +56,7 @@ func unzipFile(content []byte) (<-chan *SubmissionFile, error) {
 	for _, f := range files {
 		go func(file *zip.File) {
 			processed, err := processFile(file)
-			wg.Done()
+			defer wg.Done()
 			if err != nil {
 				return
 			}
