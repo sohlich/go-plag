@@ -2,20 +2,23 @@ package main
 
 import (
 	// "runtime"
-	// "sync"
-	"golang.org/x/net/context"
+	"sync"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/sohlich/go-plag/parser"
+	"golang.org/x/net/context"
 )
 
 var inProgressMap = make(map[string]context.CancelFunc)
+var mutex = new(sync.Mutex)
 
 //TODO implement assignment check
 func checkAssignment(assignment *Assignment) int {
 
 	//try to cancell previous running processes
+	mutex.Lock()
 	cancel := inProgressMap[assignment.ID.Hex()]
+	mutex.Unlock()
 	if cancel != nil {
 		cancel()
 	}
@@ -59,7 +62,7 @@ func generateTuples(ctx context.Context, files []SubmissionFile) <-chan OutputCo
 				}
 				select {
 				case <-ctx.Done():
-					log.Debugln("Cancelling generating tuples")
+					log.Infoln("Cancelling generating tuples")
 					return
 				case output <- tuple:
 				}
@@ -91,7 +94,7 @@ func compareFiles(ctx context.Context, inputChannel <-chan OutputComparisonResul
 			toCompare.SimilarityIndex = parser.Jaccard.Compare(sbmsnOne.TokenMap, sbmsnTwo.TokenMap)
 			select {
 			case <-ctx.Done():
-				log.Debugln("Cancelling comparison")
+				log.Infoln("Cancelling comparison")
 				return
 			case outputChannel <- toCompare:
 			}
