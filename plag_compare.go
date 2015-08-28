@@ -2,6 +2,7 @@ package main
 
 import (
 	// "runtime"
+	"math"
 	"sync"
 
 	log "github.com/Sirupsen/logrus"
@@ -20,6 +21,7 @@ func checkAssignment(assignment *Assignment) int {
 	cancel := inProgressMap[assignment.ID.Hex()]
 	mutex.Unlock()
 	if cancel != nil {
+		log.Debugln("Found previous running comparison job")
 		cancel()
 	}
 	ctx, cancelFunc := context.WithCancel(context.TODO())
@@ -37,11 +39,14 @@ func checkAssignment(assignment *Assignment) int {
 	compCount := 0
 	for comparison := range outpuchannel {
 		compCount++
-		_, err := mongo.Save(&comparison)
-		if err != nil {
-			log.Error(err)
+		if !math.IsNaN(float64(comparison.SimilarityIndex)) {
+			_, err := mongo.Save(&comparison)
+			if err != nil {
+				log.Error(err)
+			}
 		}
 	}
+	log.Infof("Comparison of %s done", assignment.ID.Hex())
 	return compCount
 }
 
@@ -65,6 +70,7 @@ func generateTuples(ctx context.Context, files []SubmissionFile) <-chan OutputCo
 					log.Infoln("Cancelling generating tuples")
 					return
 				case output <- tuple:
+
 				}
 			}
 		}
@@ -79,24 +85,29 @@ func compareFiles(ctx context.Context, inputChannel <-chan OutputComparisonResul
 	outputChannel := make(chan OutputComparisonResult)
 	go func(inChan <-chan OutputComparisonResult) {
 		defer close(outputChannel)
-		for toCompare := range inChan {
-			log.Debugf("Starting to compare {}", toCompare.Files[0])
-			sbmsnOne, err := mongo.FindSubmissionFileById(toCompare.Files[0])
-			if err != nil {
-				log.Error(err)
-				continue
-			}
-			sbmsnTwo, err := mongo.FindSubmissionFileById(toCompare.Files[1])
-			if err != nil {
-				log.Error(err)
-				continue
-			}
-			toCompare.SimilarityIndex = parser.Jaccard.Compare(sbmsnOne.TokenMap, sbmsnTwo.TokenMap)
+		for {
 			select {
 			case <-ctx.Done():
 				log.Infoln("Cancelling comparison")
 				return
-			case outputChannel <- toCompare:
+			case toCompare, ok := <-inChan:
+				if !ok {
+					return
+				}
+				log.Debugf("Starting to compare {}", toCompare.Files[0])
+				sbmsnOne, err := mongo.FindSubmissionFileById(toCompare.Files[0])
+				if err != nil {
+					log.Error(err)
+					continue
+				}
+				sbmsnTwo, err := mongo.FindSubmissionFileById(toCompare.Files[1])
+				if err != nil {
+					log.Error(err)
+					continue
+				}
+				toCompare.SimilarityIndex = parser.Jaccard.Compare(sbmsnOne.TokenMap, sbmsnTwo.TokenMap)
+				outputChannel <- toCompare
+
 			}
 		}
 	}(inputChannel)
