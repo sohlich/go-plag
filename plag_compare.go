@@ -37,18 +37,28 @@ func checkAssignment(assignment *Assignment) int {
 	outpuchannel := compareFiles(ctx, processChanel)
 
 	compCount := 0
-	for comparison := range outpuchannel {
-		compCount++
-		if !math.IsNaN(float64(comparison.SimilarityIndex)) {
-			_, err := mongo.Save(&comparison)
-			if err != nil {
-				log.Error(err)
+
+	for {
+		select {
+		case <-ctx.Done():
+			log.Infoln("Assignment check cancelled")
+			return compCount
+		case comparison, ok := <-outpuchannel:
+			if !ok {
+				log.Infof("Comparison of %s done", assignment.ID.Hex())
+				mongo.FindMaxSimilarityBySubmission(assignment.ID.Hex())
+				return compCount
 			}
+			compCount++
+			if !math.IsNaN(float64(comparison.SimilarityIndex)) {
+				_, err := mongo.Save(&comparison)
+				if err != nil {
+					log.Error(err)
+				}
+			}
+
 		}
 	}
-	log.Infof("Comparison of %s done", assignment.ID.Hex())
-	mongo.FindMaxSimilarityBySubmission(assignment.ID.Hex())
-	return compCount
 }
 
 //Generates non-repeating
@@ -59,20 +69,22 @@ func generateTuples(ctx context.Context, files []SubmissionFile) <-chan OutputCo
 		defer close(output)
 		for i := 0; i < len(files); i++ {
 			for j := i + 1; j < len(files); j++ {
-				//Do not compare files form same submission
-				if files[i].Submission == files[j].Submission {
-					continue
-				}
-				tuple := OutputComparisonResult{
-					Assignment:  files[i].Assignment,
-					Files:       []string{files[i].ID.Hex(), files[j].ID.Hex()},
-					Submissions: []string{files[i].Submission, files[j].Submission},
-				}
+
 				select {
 				case <-ctx.Done():
 					log.Debugln("Generating of tuples canceled")
 					return
-				case output <- tuple:
+				default:
+					//Do not compare files form same submission
+					if files[i].Submission == files[j].Submission {
+						continue
+					}
+					tuple := OutputComparisonResult{
+						Assignment:  files[i].Assignment,
+						Files:       []string{files[i].ID.Hex(), files[j].ID.Hex()},
+						Submissions: []string{files[i].Submission, files[j].Submission},
+					}
+					output <- tuple
 				}
 			}
 		}

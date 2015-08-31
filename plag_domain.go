@@ -151,5 +151,5 @@ func (m *Mongo) FindMaxSimilarityBySubmission(assignmentId string) {
 		{"$group": bson.M{"_id": "$submission", "maxSim": bson.M{"$max": "$similarities.val"}}}}
 	qryRes := make([]bson.M, 0)
 	m.results.Pipe(query).All(&qryRes)
-	log.Debugln(qryRes)
+	log.Infoln(qryRes)
 }
