@@ -18,6 +18,7 @@ type DataStorage interface {
 	FindOneAssignmentById(id string) (*Assignment, error)
 	FindAllSubmissionsByAssignment(assignmentId string) ([]SubmissionFile, error)
 	FindAllComparableSubmissionFiles(submissionfile *SubmissionFile) ([]SubmissionFile, error)
+	FindMaxSimilarityBySubmission(assignmentId string)
 }
 
 type Mongo struct {
@@ -89,17 +90,22 @@ func (m *Mongo) Save(object MongoObject) (interface{}, error) {
 }
 
 func (m *Mongo) updateSimilarityResults(comparison *OutputComparisonResult) error {
-	file1Query := bson.M{"_id": comparison.Files[0]}
+
+	file1Query := bson.M{"_id": comparison.Files[0], "submission": comparison.Submissions[0], "assignment": comparison.Assignment}
 	file1Pull := bson.M{"$pull": bson.M{"similarities": bson.M{"id": comparison.Files[1]}}}
-	file1Update := bson.M{"$push": bson.M{"similarities": bson.M{"id": comparison.Files[1], "val": comparison.SimilarityIndex}}}
+	file1Update := bson.M{"$push": bson.M{"similarities": bson.M{"id": comparison.Files[1],
+		"submission": comparison.Submissions[1],
+		"val":        comparison.SimilarityIndex}}}
 
 	//TODO do in single call after bulk upsert available
 	_, err := m.results.Upsert(file1Query, file1Pull)
 	_, err = m.results.Upsert(file1Query, file1Update)
 
-	file2Query := bson.M{"_id": comparison.Files[1]}
+	file2Query := bson.M{"_id": comparison.Files[1], "submission": comparison.Submissions[1], "assignment": comparison.Assignment}
 	file2Pull := bson.M{"$pull": bson.M{"similarities": bson.M{"id": comparison.Files[0]}}}
-	file2Update := bson.M{"$push": bson.M{"similarities": bson.M{"id": comparison.Files[0], "val": comparison.SimilarityIndex}}}
+	file2Update := bson.M{"$push": bson.M{"similarities": bson.M{"id": comparison.Files[0],
+		"submission": comparison.Submissions[0],
+		"val":        comparison.SimilarityIndex}}}
 
 	//TODO do in single call after bulk upsert available
 	_, err = m.results.Upsert(file2Query, file2Pull)
@@ -136,4 +142,14 @@ func (m *Mongo) FindAllComparableSubmissionFiles(submissionF *SubmissionFile) ([
 	var result []SubmissionFile
 	err := m.submissions.Find(bson.M{"$and": []bson.M{bson.M{"assignment": submissionF.Assignment}, bson.M{"submission": bson.M{"$ne": submissionF.Submission}}}}).All(&result)
 	return result, err
+}
+
+func (m *Mongo) FindMaxSimilarityBySubmission(assignmentId string) {
+	query := []bson.M{
+		{"$match": bson.M{"assignment": assignmentId}},
+		{"$unwind": "$similarities"},
+		{"$group": bson.M{"_id": "$submission", "maxSim": bson.M{"$max": "$similarities.val"}}}}
+	qryRes := make([]bson.M, 0)
+	m.results.Pipe(query).All(&qryRes)
+	log.Debugln(qryRes)
 }

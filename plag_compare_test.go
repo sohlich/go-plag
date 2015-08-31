@@ -66,6 +66,10 @@ func (f *FakeDataStorage) FindAllComparableSubmissionFiles(submissionfile *Submi
 	return []SubmissionFile{}, nil
 }
 
+func (f *FakeDataStorage) FindMaxSimilarityBySubmission(assignmentId string) {
+
+}
+
 func TestCompareFiles(t *testing.T) {
 	log.SetLevel(log.DebugLevel)
 	log.Debugln("TestCompareFiles")

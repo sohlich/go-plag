@@ -27,6 +27,11 @@ func TestMongoConnectionFailed(t *testing.T) {
 	}
 }
 
+// func TestIntegrationFindMaxSimilarities(t *testing.T) {
+// 	initStorage()
+// 	mongo.FindMaxSimilarityBySubmission("55c7a86e8543eb08edca6b51")
+// }
+
 // func TestFindAllByAssignment(t *testing.T) {
 // 	initStorage()
 // 	result, err := mongo.FindAllSubmissionsByAssignment("55c7b6ebe13823356f000001")

@@ -47,6 +47,7 @@ func checkAssignment(assignment *Assignment) int {
 		}
 	}
 	log.Infof("Comparison of %s done", assignment.ID.Hex())
+	mongo.FindMaxSimilarityBySubmission(assignment.ID.Hex())
 	return compCount
 }
 
@@ -63,14 +64,15 @@ func generateTuples(ctx context.Context, files []SubmissionFile) <-chan OutputCo
 					continue
 				}
 				tuple := OutputComparisonResult{
-					Files: []string{files[i].ID.Hex(), files[j].ID.Hex()},
+					Assignment:  files[i].Assignment,
+					Files:       []string{files[i].ID.Hex(), files[j].ID.Hex()},
+					Submissions: []string{files[i].Submission, files[j].Submission},
 				}
 				select {
 				case <-ctx.Done():
-					log.Infoln("Cancelling generating tuples")
+					log.Debugln("Generating of tuples canceled")
 					return
 				case output <- tuple:
-
 				}
 			}
 		}

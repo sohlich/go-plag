@@ -61,7 +61,9 @@ type Submission struct {
 //DTO for fileComparison
 type OutputComparisonResult struct {
 	ID              bson.ObjectId `bson:"_id"`
+	Assignment      string
 	Files           []string
+	Submissions     []string
 	SimilarityIndex float32
 }
 

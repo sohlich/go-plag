@@ -22,7 +22,7 @@ var mongo DataStorage = &Mongo{
 
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
-	//log.SetLevel(log.DebugLevel)
+	// log.SetLevel(log.DebugLevel)
 
 	initGin(engine)
 	initStorage()
