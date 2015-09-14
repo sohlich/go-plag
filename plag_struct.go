@@ -64,6 +64,7 @@ type OutputComparisonResult struct {
 	Assignment      string
 	Files           []string
 	Submissions     []string
+	Tokens          []map[string]int `omitempty`
 	SimilarityIndex float32
 }
 

@@ -1,48 +1,101 @@
 package main
 
 import (
-	"runtime"
+	"expvar"
+	"flag"
+	"fmt"
+	"os"
+	"runtime/pprof"
 
+	"code.google.com/p/gcfg"
 	log "github.com/Sirupsen/logrus"
+	expvarGin "github.com/gin-gonic/contrib/expvar"
 	"github.com/gin-gonic/gin"
 )
 
-//Todo mongo string to config
 const (
-	mgoConnString string = "localhost:27017"
+	config = "application.conf"
 )
 
-var engine *gin.Engine = gin.Default()
-var mongo DataStorage = &Mongo{
-	Database:             "plag",
-	AssignmentCollection: "assignments",
-	SubmissionCollection: "submissions",
-	ResultCollection:     "results",
-}
+var (
+	engine             = gin.Default()
+	mongo  DataStorage = &Mongo{
+		Database:             "plag",
+		AssignmentCollection: "assignments",
+		SubmissionCollection: "submissions",
+		ResultCollection:     "results",
+	}
+
+	//expvar
+	comparison_count = expvar.NewInt("comparison_count")
+	cpuprofile       = flag.String("cpuprofile", "", "write cpu profile to file")
+)
 
 func main() {
-	runtime.GOMAXPROCS(runtime.NumCPU())
-	// log.SetLevel(log.DebugLevel)
+	flag.Parse()
+	if *cpuprofile != "" {
+		f, err := os.Create(*cpuprofile)
+		if err != nil {
+			fmt.Println("Error: ", err)
+		}
+		pprof.StartCPUProfile(f)
+		defer pprof.StopCPUProfile()
+	}
 
-	initGin(engine)
+	//Load config
+	cfg := loadProperties(config)
+
+	//Setup and init storage
+	mgoConf := cfg.Mongo
+	mgoConnString := fmt.Sprintf("%s:%s",
+		mgoConf.Host,
+		mgoConf.Port)
+	mgo, _ := mongo.(*Mongo)
+	mgo.AssignmentCollection = mgoConf.Assignments
+	mgo.ResultCollection = mgoConf.Results
+	mgo.SubmissionCollection = mgoConf.Submissions
+	mgo.Database = mgoConf.Database
+	mgo.ConnectionString = mgoConnString
 	initStorage()
+	defer mgo.CloseSession()
 
-	//Init db connection
-	log.Info("Executing server")
-	engine.Run("0.0.0.0:8080")
+	//Setup and start webserver
+	webConf := cfg.Server
+	initGin(engine)
+	address := fmt.Sprintf("%s:%s",
+		webConf.Host,
+		webConf.Port)
+	engine.Run(address)
 }
 
 //Setup gin Engine server
 func initGin(ginEngine *gin.Engine) {
-
 	ginEngine.PUT("/assignment", putAssignment)
 	ginEngine.PUT("/submission", putSubmission)
-	ginEngine.Use(gin.Logger())
+	ginEngine.Use(logrusLogger()).GET("/debug/vars", expvarGin.Handler())
+}
+
+func logrusLogger() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		comparison_count.Add(1)
+	}
 }
 
 func initStorage() {
-	err := mongo.OpenSession(mgoConnString)
+	err := mongo.OpenSession()
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func loadProperties(cfgFile string) configFile {
+	var err error
+	var cfg configFile
+	if cfgFile != "" {
+		err = gcfg.ReadFileInto(&cfg, cfgFile)
+	}
+	if err != nil {
+		log.Panic(err)
+	}
+	return cfg
 }

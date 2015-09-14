@@ -63,6 +63,9 @@ var Jaccard *jaccardIndexComparator = &jaccardIndexComparator{}
 type jaccardIndexComparator struct{}
 
 func (j *jaccardIndexComparator) Compare(mapA map[string]int, mapB map[string]int) float32 {
+	if len(mapA) == 0 || len(mapB) == 0 {
+		return 0
+	}
 
 	//Compute intersection
 	intrSec := 0

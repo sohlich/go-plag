@@ -15,7 +15,7 @@ import (
 type FakeDataStorage struct {
 }
 
-func (f *FakeDataStorage) OpenSession(url string) error {
+func (f *FakeDataStorage) OpenSession() error {
 	return nil
 }
 
@@ -70,6 +70,7 @@ func (f *FakeDataStorage) FindMaxSimilarityBySubmission(assignmentId string) {
 
 }
 
+//TODO fix test
 func TestCompareFiles(t *testing.T) {
 	log.SetLevel(log.DebugLevel)
 	log.Debugln("TestCompareFiles")
@@ -80,7 +81,14 @@ func TestCompareFiles(t *testing.T) {
 	inputChan := make(chan OutputComparisonResult)
 	ctx, _ := context.WithCancel(context.TODO())
 	outputChannel := compareFiles(ctx, inputChan)
-	go func() { inputChan <- OutputComparisonResult{Files: []string{"1", "2"}} }()
+	go func() {
+		f1, _ := mongo.FindSubmissionFileById("1")
+		f2, _ := mongo.FindSubmissionFileById("2")
+		inputChan <- OutputComparisonResult{
+			Files:  []string{"1", "2"},
+			Tokens: []map[string]int{f1.TokenMap, f2.TokenMap},
+		}
+	}()
 
 	output := <-outputChannel
 

@@ -11,7 +11,7 @@ import (
 )
 
 type DataStorage interface {
-	OpenSession(url string) error
+	OpenSession() error
 	CloseSession()
 	Save(MongoObject) (interface{}, error)
 	FindSubmissionFileById(id string) (*SubmissionFile, error)
@@ -22,6 +22,7 @@ type DataStorage interface {
 }
 
 type Mongo struct {
+	ConnectionString     string
 	Database             string `validate:"nonzero"`
 	AssignmentCollection string `validate:"nonzero"`
 	SubmissionCollection string `validate:"nonzero"`
@@ -35,14 +36,14 @@ type Mongo struct {
 
 //Opens mongo session for given url and
 //sets the session to global property
-func (m *Mongo) OpenSession(url string) error {
+func (m *Mongo) OpenSession() error {
 	log.Info("")
 	log.Infof(`Initializing MongoDB
 		Connection string %s
 		Database: %s
 		Assignment collection: %s
 		Submission collection: %s`,
-		url,
+		m.ConnectionString,
 		m.Database,
 		m.AssignmentCollection,
 		m.SubmissionCollection)
@@ -53,7 +54,7 @@ func (m *Mongo) OpenSession(url string) error {
 		return &InitError{"Collection names Empty", validErr}
 	}
 
-	mongo, connError := mgo.Dial(url)
+	mongo, connError := mgo.Dial(m.ConnectionString)
 	m.mongoSession = mongo
 	if connError != nil {
 		return &InitError{"Connection failed", connError}
@@ -91,14 +92,14 @@ func (m *Mongo) Save(object MongoObject) (interface{}, error) {
 
 func (m *Mongo) updateSimilarityResults(comparison *OutputComparisonResult) error {
 
+	updateMap := bson.M{"id": comparison.Files[1]}
 	file1Query := bson.M{"_id": comparison.Files[0], "submission": comparison.Submissions[0], "assignment": comparison.Assignment}
-	file1Pull := bson.M{"$pull": bson.M{"similarities": bson.M{"id": comparison.Files[1]}}}
-	file1Update := bson.M{"$push": bson.M{"similarities": bson.M{"id": comparison.Files[1],
-		"submission": comparison.Submissions[1],
-		"val":        comparison.SimilarityIndex}}}
-
-	//TODO do in single call after bulk upsert available
+	file1Pull := bson.M{"$pull": bson.M{"similarities": updateMap}}
 	_, err := m.results.Upsert(file1Query, file1Pull)
+
+	updateMap["submission"] = comparison.Submissions[1]
+	updateMap["val"] = comparison.SimilarityIndex
+	file1Update := bson.M{"$push": bson.M{"similarities": updateMap}}
 	_, err = m.results.Upsert(file1Query, file1Update)
 
 	file2Query := bson.M{"_id": comparison.Files[1], "submission": comparison.Submissions[1], "assignment": comparison.Assignment}

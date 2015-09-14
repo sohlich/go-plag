@@ -55,7 +55,10 @@ func putSubmission(ctx *gin.Context) {
 
 	//Launch Goroutine to process submission
 	go func(sub *Submission, assGnmnt *Assignment) {
-		processSubmission(sub)
+		err := processSubmission(sub)
+		if err != nil {
+			log.Errorf("Error in processSubmission %s the error: %s", sub.ID, err.Error())
+		}
 		checkAssignment(assGnmnt)
 	}(submission, assignment)
 }

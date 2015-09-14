@@ -2,7 +2,7 @@ package main
 
 import (
 	// "runtime"
-	"math"
+	// "math"
 	"sync"
 
 	log "github.com/Sirupsen/logrus"
@@ -50,12 +50,12 @@ func checkAssignment(assignment *Assignment) int {
 				return compCount
 			}
 			compCount++
-			if !math.IsNaN(float64(comparison.SimilarityIndex)) {
-				_, err := mongo.Save(&comparison)
-				if err != nil {
-					log.Error(err)
-				}
+			// if !math.IsNaN(float64(comparison.SimilarityIndex)) {
+			_, err := mongo.Save(&comparison)
+			if err != nil {
+				log.Error(err)
 			}
+			// }
 
 		}
 	}
@@ -79,10 +79,12 @@ func generateTuples(ctx context.Context, files []SubmissionFile) <-chan OutputCo
 					if files[i].Submission == files[j].Submission {
 						continue
 					}
+
 					tuple := OutputComparisonResult{
 						Assignment:  files[i].Assignment,
 						Files:       []string{files[i].ID.Hex(), files[j].ID.Hex()},
 						Submissions: []string{files[i].Submission, files[j].Submission},
+						Tokens:      []map[string]int{files[i].TokenMap, files[j].TokenMap},
 					}
 					output <- tuple
 				}
@@ -108,18 +110,12 @@ func compareFiles(ctx context.Context, inputChannel <-chan OutputComparisonResul
 				if !ok {
 					return
 				}
-				log.Debugf("Starting to compare {}", toCompare.Files[0])
-				sbmsnOne, err := mongo.FindSubmissionFileById(toCompare.Files[0])
-				if err != nil {
-					log.Error(err)
-					continue
-				}
-				sbmsnTwo, err := mongo.FindSubmissionFileById(toCompare.Files[1])
-				if err != nil {
-					log.Error(err)
-					continue
-				}
-				toCompare.SimilarityIndex = parser.Jaccard.Compare(sbmsnOne.TokenMap, sbmsnTwo.TokenMap)
+				//Metrics
+				comparison_count.Add(1)
+				log.Debugf("Starting to compare {}", toCompare.Tokens[0])
+				sbmsnOne := toCompare.Tokens[0]
+				sbmsnTwo := toCompare.Tokens[1]
+				toCompare.SimilarityIndex = parser.Jaccard.Compare(sbmsnOne, sbmsnTwo)
 				outputChannel <- toCompare
 
 			}

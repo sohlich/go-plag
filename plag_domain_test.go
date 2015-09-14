@@ -7,7 +7,7 @@ import (
 
 func TestMongoInitValidationFailed(t *testing.T) {
 	mongo := &Mongo{}
-	err := mongo.OpenSession("url")
+	err := mongo.OpenSession()
 	assert.NotNil(t, err)
 	assert.Contains(t, err.Error(), "Collection names Empty")
 	_, ok := err.(*InitError)
@@ -18,7 +18,7 @@ func TestMongoInitValidationFailed(t *testing.T) {
 
 func TestMongoConnectionFailed(t *testing.T) {
 	mongo := &Mongo{}
-	err := mongo.OpenSession("url")
+	err := mongo.OpenSession()
 	assert.NotNil(t, err)
 	assert.Contains(t, err.Error(), "Collection names Empty")
 	_, ok := err.(*InitError)
