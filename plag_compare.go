@@ -81,10 +81,11 @@ func generateTuples(ctx context.Context, files []SubmissionFile) <-chan OutputCo
 					}
 
 					tuple := OutputComparisonResult{
-						Assignment:  files[i].Assignment,
-						Files:       []string{files[i].ID.Hex(), files[j].ID.Hex()},
-						Submissions: []string{files[i].Submission, files[j].Submission},
-						Tokens:      []map[string]int{files[i].TokenMap, files[j].TokenMap},
+						Assignment:      files[i].Assignment,
+						Files:           []string{files[i].ID.Hex(), files[j].ID.Hex()},
+						Submissions:     []string{files[i].Submission, files[j].Submission},
+						Tokens:          []map[string]int{files[i].TokenMap, files[j].TokenMap},
+						SimilarityIndex: -1,
 					}
 					output <- tuple
 				}

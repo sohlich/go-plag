@@ -64,6 +64,14 @@ func (m *Mongo) OpenSession() error {
 	m.assignments = m.db.C(m.AssignmentCollection)
 	m.submissions = m.db.C(m.SubmissionCollection)
 	m.results = m.db.C(m.ResultCollection)
+
+	//Indexes
+
+	m.submissions.EnsureIndexKey("assignment")
+	m.submissions.EnsureIndexKey("submission")
+	m.results.EnsureIndexKey("fileId")
+	m.results.EnsureIndexKey("compareTo")
+
 	return nil
 }
 
@@ -90,27 +98,54 @@ func (m *Mongo) Save(object MongoObject) (interface{}, error) {
 	return object, err
 }
 
+// func (m *Mongo) updateSimilarityResults(comparison *OutputComparisonResult) error {
+
+// 	updateMap := bson.M{"id": comparison.Files[1]}
+// 	file1Query := bson.M{"_id": comparison.Files[0], "submission": comparison.Submissions[0], "assignment": comparison.Assignment}
+// 	file1Pull := bson.M{"$pull": bson.M{"similarities": updateMap}}
+// 	_, err := m.results.Upsert(file1Query, file1Pull)
+
+// 	updateMap["submission"] = comparison.Submissions[1]
+// 	updateMap["val"] = comparison.SimilarityIndex
+// 	file1Update := bson.M{"$push": bson.M{"similarities": updateMap}}
+// 	_, err = m.results.Upsert(file1Query, file1Update)
+
+// 	file2Query := bson.M{"_id": comparison.Files[1], "submission": comparison.Submissions[1], "assignment": comparison.Assignment}
+// 	file2Pull := bson.M{"$pull": bson.M{"similarities": bson.M{"id": comparison.Files[0]}}}
+// 	file2Update := bson.M{"$push": bson.M{"similarities": bson.M{"id": comparison.Files[0],
+// 		"submission": comparison.Submissions[0],
+// 		"val":        comparison.SimilarityIndex}}}
+
+// 	//TODO do in single call after bulk upsert available
+// 	_, err = m.results.Upsert(file2Query, file2Pull)
+// 	_, err = m.results.Upsert(file2Query, file2Update)
+
+// 	return err
+// }
+
 func (m *Mongo) updateSimilarityResults(comparison *OutputComparisonResult) error {
 
-	updateMap := bson.M{"id": comparison.Files[1]}
-	file1Query := bson.M{"_id": comparison.Files[0], "submission": comparison.Submissions[0], "assignment": comparison.Assignment}
-	file1Pull := bson.M{"$pull": bson.M{"similarities": updateMap}}
-	_, err := m.results.Upsert(file1Query, file1Pull)
+	fileQuery := bson.M{"fileId": comparison.Files[0],
+		"comparedTo.fileId":     comparison.Files[1],
+		"comparedTo.submission": comparison.Submissions[1],
+		"submission":            comparison.Submissions[0],
+		"assignment":            comparison.Assignment}
+	fileUpdate := bson.M{"$set": bson.M{"similarity": comparison.SimilarityIndex}}
+	_, err := m.results.Upsert(fileQuery, fileUpdate)
 
-	updateMap["submission"] = comparison.Submissions[1]
-	updateMap["val"] = comparison.SimilarityIndex
-	file1Update := bson.M{"$push": bson.M{"similarities": updateMap}}
-	_, err = m.results.Upsert(file1Query, file1Update)
+	if err != nil {
+		log.Errorf("Prvni update failed %s", err.Error())
+	}
 
-	file2Query := bson.M{"_id": comparison.Files[1], "submission": comparison.Submissions[1], "assignment": comparison.Assignment}
-	file2Pull := bson.M{"$pull": bson.M{"similarities": bson.M{"id": comparison.Files[0]}}}
-	file2Update := bson.M{"$push": bson.M{"similarities": bson.M{"id": comparison.Files[0],
-		"submission": comparison.Submissions[0],
-		"val":        comparison.SimilarityIndex}}}
+	fileQuery["comparedTo.fileId"] = comparison.Files[0]
+	fileQuery["comparedTo.submission"] = comparison.Submissions[0]
+	fileQuery["fileId"] = comparison.Files[1]
+	fileQuery["submission"] = comparison.Submissions[1]
+	_, err = m.results.Upsert(fileQuery, fileUpdate)
 
-	//TODO do in single call after bulk upsert available
-	_, err = m.results.Upsert(file2Query, file2Pull)
-	_, err = m.results.Upsert(file2Query, file2Update)
+	if err != nil {
+		log.Errorf("Druhy update failed %s", err.Error())
+	}
 
 	return err
 }
@@ -148,8 +183,9 @@ func (m *Mongo) FindAllComparableSubmissionFiles(submissionF *SubmissionFile) ([
 func (m *Mongo) FindMaxSimilarityBySubmission(assignmentId string) {
 	query := []bson.M{
 		{"$match": bson.M{"assignment": assignmentId}},
-		{"$unwind": "$similarities"},
-		{"$group": bson.M{"_id": "$submission", "maxSim": bson.M{"$max": "$similarities.val"}}}}
+		// {"$unwind": "$similarities"},
+		// {"$group": bson.M{"_id": "$submission", "maxSim": bson.M{"$max": "$similarities.val"}}}}
+		{"$group": bson.M{"_id": "$submission", "maxSim": bson.M{"$max": "$similarity"}}}}
 	qryRes := make([]bson.M, 0)
 	m.results.Pipe(query).All(&qryRes)
 	log.Infoln(qryRes)

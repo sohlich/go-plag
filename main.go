@@ -38,7 +38,11 @@ func main() {
 		if err != nil {
 			fmt.Println("Error: ", err)
 		}
-		pprof.StartCPUProfile(f)
+		//runtime.SetCPUProfileRate(100)
+		err = pprof.StartCPUProfile(f)
+		if err != nil {
+			fmt.Println("Error: ", err)
+		}
 		defer pprof.StopCPUProfile()
 	}
 
