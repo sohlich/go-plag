@@ -18,9 +18,10 @@ func checkAssignment(assignment *Assignment) int {
 
 	//try to cancell previous running processes
 	mutex.Lock()
-	cancel := inProgressMap[assignment.ID.Hex()]
+	cancel, ok := inProgressMap[assignment.ID.Hex()]
 	mutex.Unlock()
-	if cancel != nil {
+
+	if ok {
 		log.Debugln("Found previous running comparison job")
 		cancel()
 	}

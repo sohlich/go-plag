@@ -37,9 +37,8 @@ type Mongo struct {
 //Opens mongo session for given url and
 //sets the session to global property
 func (m *Mongo) OpenSession() error {
-	log.Info("")
 	log.Infof(`Initializing MongoDB
-		Connection string %s
+		Connection string: %s
 		Database: %s
 		Assignment collection: %s
 		Submission collection: %s`,
@@ -133,9 +132,7 @@ func (m *Mongo) updateSimilarityResults(comparison *OutputComparisonResult) erro
 	fileUpdate := bson.M{"$set": bson.M{"similarity": comparison.SimilarityIndex}}
 	_, err := m.results.Upsert(fileQuery, fileUpdate)
 
-	if err != nil {
-		log.Errorf("Prvni update failed %s", err.Error())
-	}
+	ifErr(err)
 
 	fileQuery["comparedTo.fileId"] = comparison.Files[0]
 	fileQuery["comparedTo.submission"] = comparison.Submissions[0]
@@ -143,9 +140,7 @@ func (m *Mongo) updateSimilarityResults(comparison *OutputComparisonResult) erro
 	fileQuery["submission"] = comparison.Submissions[1]
 	_, err = m.results.Upsert(fileQuery, fileUpdate)
 
-	if err != nil {
-		log.Errorf("Druhy update failed %s", err.Error())
-	}
+	ifErr(err)
 
 	return err
 }
@@ -189,4 +184,10 @@ func (m *Mongo) FindMaxSimilarityBySubmission(assignmentId string) {
 	qryRes := make([]bson.M, 0)
 	m.results.Pipe(query).All(&qryRes)
 	log.Infoln(qryRes)
+}
+
+func ifErr(err error) {
+	if err != nil {
+		log.Errorln(err)
+	}
 }

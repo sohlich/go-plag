@@ -11,6 +11,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	expvarGin "github.com/gin-gonic/contrib/expvar"
 	"github.com/gin-gonic/gin"
+	"github.com/sohlich/go-plag/parser"
 )
 
 const (
@@ -27,8 +28,9 @@ var (
 	}
 
 	//expvar
-	comparison_count = expvar.NewInt("comparison_count")
-	cpuprofile       = flag.String("cpuprofile", "", "write cpu profile to file")
+	comparison_count  = expvar.NewInt("comparison_count")
+	submission_errors = expvar.NewInt("submission_error")
+	cpuprofile        = flag.String("cpuprofile", "", "write cpu profile to file")
 )
 
 func main() {
@@ -63,6 +65,9 @@ func main() {
 	initStorage()
 	defer mgo.CloseSession()
 
+	//Load plugins
+	loadPlugins()
+
 	//Setup and start webserver
 	webConf := cfg.Server
 	initGin(engine)
@@ -77,6 +82,11 @@ func initGin(ginEngine *gin.Engine) {
 	ginEngine.PUT("/assignment", putAssignment)
 	ginEngine.PUT("/submission", putSubmission)
 	ginEngine.Use(logrusLogger()).GET("/debug/vars", expvarGin.Handler())
+}
+
+func loadPlugins() {
+	//Load plugins
+	parser.LoadPlugins("plugin")
 }
 
 func logrusLogger() gin.HandlerFunc {

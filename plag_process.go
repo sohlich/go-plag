@@ -4,6 +4,8 @@ import (
 	"archive/zip"
 	"bytes"
 	"io/ioutil"
+	"regexp"
+	// "strings"
 	"sync"
 
 	log "github.com/Sirupsen/logrus"
@@ -11,10 +13,16 @@ import (
 	"github.com/sohlich/go-plag/parser"
 )
 
+var (
+	extensionRegex = regexp.MustCompile("^.*\\.")
+)
+
 //Process the submission that comes from api,
 //unzip, parse and save to database.
 func processSubmission(submission *Submission) error {
-	sChan, err := unzipFile(submission.Content)
+
+	filter := parser.GetLangFileFilter(submission.Lang)
+	sChan, err := unzipFile(submission.Content, filter)
 	if err != nil {
 		return err
 	}
@@ -27,7 +35,9 @@ func processSubmission(submission *Submission) error {
 		submissionFile.Submission = submissionID
 		tokContent, tokMap, err := parser.TokenizeContent(submissionFile.Content, submission.Lang)
 		if err != nil {
-			return err
+			log.Errorf("Cannot process %s error: %s", submissionFile.Name, err)
+			submission_errors.Add(1)
+			continue
 		}
 		submissionFile.TokenMap = tokMap
 		submissionFile.Tokens = tokContent
@@ -39,7 +49,7 @@ func processSubmission(submission *Submission) error {
 
 //Unzipt the files in parallel
 //returns buffered channel
-func unzipFile(content []byte) (<-chan *SubmissionFile, error) {
+func unzipFile(content []byte, filter map[string]bool) (<-chan *SubmissionFile, error) {
 	r, err := zip.NewReader(bytes.NewReader(content), int64(len(content)))
 
 	if err != nil {
@@ -52,16 +62,22 @@ func unzipFile(content []byte) (<-chan *SubmissionFile, error) {
 	unzippedStream := make(chan *SubmissionFile, filesLen)
 
 	var wg sync.WaitGroup
-	wg.Add(filesLen)
+
 	for _, f := range files {
-		go func(file *zip.File) {
-			processed, err := processFile(file)
-			defer wg.Done()
-			if err != nil {
-				return
-			}
-			unzippedStream <- processed
-		}(f)
+		extension := parseExtension(f.Name)
+		if filter[extension] {
+			wg.Add(1)
+			go func(file *zip.File) {
+				processed, err := processFile(file)
+				defer wg.Done()
+				if err != nil {
+					return
+				}
+				unzippedStream <- processed
+			}(f)
+		} else {
+			log.Infof("Not processing %s", f.Name)
+		}
 	}
 
 	go func() {
@@ -88,4 +104,8 @@ func processFile(file *zip.File) (*SubmissionFile, error) {
 	}
 	submissionFile.Content = string(content)
 	return submissionFile, nil
+}
+
+func parseExtension(fullPath string) string {
+	return extensionRegex.ReplaceAllString(fullPath, "")
 }

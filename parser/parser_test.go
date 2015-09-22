@@ -2,6 +2,7 @@ package parser
 
 import (
 	"encoding/json"
+	"log"
 	"strings"
 	"testing"
 
@@ -23,6 +24,14 @@ func TestParseDocument(t *testing.T) {
 	decoder.Decode(&decodedDoc)
 	if !assert.True(t, len(decodedDoc.NGrams) != 0 && len(decodedDoc.Metrics) != 0) {
 		t.Error("TestParseDocument - no output from plugin")
+	}
+}
+
+func TestLoadPlugins(t *testing.T) {
+	files, _ := readFilesFromDir("../plugin/")
+
+	for _, file := range files {
+		log.Println(loadPlugin(file))
 	}
 }
 
