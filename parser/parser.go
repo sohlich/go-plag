@@ -25,12 +25,6 @@ func NewPlugin() *Plugin {
 	return &Plugin{FileFilter: make(map[string]bool)}
 }
 
-//Map with plugin paths
-var plugins map[string]string = map[string]string{
-	"java": "plugin/JPlag.jar",
-	"c":    "plugin/CPlag.jar",
-}
-
 var pluginMap map[string]*Plugin = map[string]*Plugin{}
 
 //Tokenize document via java plugins

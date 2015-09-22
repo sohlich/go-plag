@@ -10,7 +10,12 @@ import (
 )
 
 func TestParseDocument(t *testing.T) {
-	plugins["java"] = "../plugin/JPlag.jar" //redefine path to plugin
+	pluginMap["java"] = &Plugin{
+		Path:       "../plugin/JPlag.jar",
+		Language:   "java",
+		Extensions: []string{"c", "cpp"},
+		FileFilter: map[string]bool{"c": true, "cpp": true},
+	} //redefine path to plugin
 
 	input := strings.NewReader(fakeFile)
 	pluginLang := "java"
