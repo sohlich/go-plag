@@ -1,12 +1,8 @@
 package parser
 
 import (
-	"encoding/json"
 	"log"
-	"strings"
 	"testing"
-
-	"github.com/stretchr/testify/assert"
 )
 
 func TestLoadPlugins(t *testing.T) {
