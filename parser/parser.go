@@ -157,3 +157,12 @@ func loadPlugin(pluginPath string) (*Plugin, error) {
 func GetLangFileFilter(lang string) map[string]bool {
 	return pluginMap[lang].FileFilter
 }
+
+func GetSupportedLangs() []string {
+	langs := make([]string, 0)
+	for lang, _ := range pluginMap {
+		langs = append(langs, lang)
+	}
+
+	return langs
+}
