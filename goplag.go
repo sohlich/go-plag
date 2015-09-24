@@ -11,6 +11,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	expvarGin "github.com/gin-gonic/contrib/expvar"
 	"github.com/gin-gonic/gin"
+	"github.com/rifflock/lfshook"
 	"github.com/sohlich/go-plag/parser"
 )
 
@@ -31,6 +32,7 @@ var (
 	comparison_count  = expvar.NewInt("comparison_count")
 	submission_errors = expvar.NewInt("submission_error")
 	cpuprofile        = flag.String("cpuprofile", "", "write cpu profile to file")
+	Log               *log.Logger
 )
 
 func main() {
@@ -50,6 +52,8 @@ func main() {
 
 	//Load config
 	cfg := loadProperties(config)
+
+	Log = NewLogger(cfg.Log.Path)
 
 	//Setup and init storage
 	mgoConf := cfg.Mongo
@@ -79,9 +83,10 @@ func main() {
 
 //Setup gin Engine server
 func initGin(ginEngine *gin.Engine) {
-	ginEngine.PUT("/assignment", putAssignment)
+	ginEngine.Use(logrusLogger()).PUT("/assignment", putAssignment)
 	ginEngine.PUT("/submission", putSubmission)
-	ginEngine.Use(logrusLogger()).GET("/debug/vars", expvarGin.Handler())
+	ginEngine.GET("/plugin/langs", getSupportedLangs)
+	ginEngine.GET("/debug/vars", expvarGin.Handler())
 }
 
 func loadPlugins() {
@@ -91,14 +96,15 @@ func loadPlugins() {
 
 func logrusLogger() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		comparison_count.Add(1)
+		Log.Infof("%s:%s from %s", c.Request.Method, c.Request.URL.String(), c.Request.RemoteAddr)
 	}
 }
 
 func initStorage() {
+	Log.Infoln("Initializing storage")
 	err := mongo.OpenSession()
 	if err != nil {
-		log.Fatal(err)
+		Log.Fatal(err)
 	}
 }
 
@@ -109,7 +115,23 @@ func loadProperties(cfgFile string) configFile {
 		err = gcfg.ReadFileInto(&cfg, cfgFile)
 	}
 	if err != nil {
-		log.Panic(err)
+		Log.Panic(err)
 	}
 	return cfg
+}
+
+//File logger for logrus
+func NewLogger(path string) *log.Logger {
+	if Log != nil {
+		return Log
+	}
+	//This creates new logger
+	Log = log.New()
+	Log.Formatter = new(log.JSONFormatter)
+	Log.Hooks.Add(lfshook.NewHook(lfshook.PathMap{
+		log.InfoLevel:  path,
+		log.ErrorLevel: path,
+		log.DebugLevel: path,
+	}))
+	return Log
 }

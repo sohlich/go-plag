@@ -1,11 +1,8 @@
 package main
 
 import (
-	// "runtime"
-	// "math"
 	"sync"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/sohlich/go-plag/parser"
 	"golang.org/x/net/context"
 )
@@ -22,7 +19,7 @@ func checkAssignment(assignment *Assignment) int {
 	mutex.Unlock()
 
 	if ok {
-		log.Debugln("Found previous running comparison job")
+		Log.Debugln("Found previous running comparison job")
 		cancel()
 	}
 	ctx, cancelFunc := context.WithCancel(context.TODO())
@@ -31,7 +28,7 @@ func checkAssignment(assignment *Assignment) int {
 	//Obtain all assignment files
 	submissionFiles, err := mongo.FindAllSubmissionsByAssignment(assignment.ID.Hex())
 	if err != nil {
-		log.Error(err)
+		Log.Error(err)
 		return 0
 	}
 	processChanel := generateTuples(ctx, submissionFiles)
@@ -42,11 +39,11 @@ func checkAssignment(assignment *Assignment) int {
 	for {
 		select {
 		case <-ctx.Done():
-			log.Infoln("Assignment check cancelled")
+			Log.Infoln("Assignment check cancelled")
 			return compCount
 		case comparison, ok := <-outpuchannel:
 			if !ok {
-				log.Infof("Comparison of %s done", assignment.ID.Hex())
+				Log.Infof("Comparison of %s done", assignment.ID.Hex())
 				mongo.FindMaxSimilarityBySubmission(assignment.ID.Hex())
 				return compCount
 			}
@@ -54,7 +51,7 @@ func checkAssignment(assignment *Assignment) int {
 			// if !math.IsNaN(float64(comparison.SimilarityIndex)) {
 			_, err := mongo.Save(&comparison)
 			if err != nil {
-				log.Error(err)
+				Log.Error(err)
 			}
 			// }
 
@@ -73,7 +70,7 @@ func generateTuples(ctx context.Context, files []SubmissionFile) <-chan OutputCo
 
 				select {
 				case <-ctx.Done():
-					log.Debugln("Generating of tuples canceled")
+					Log.Debugln("Generating of tuples canceled")
 					return
 				default:
 					//Do not compare files form same submission
@@ -106,7 +103,7 @@ func compareFiles(ctx context.Context, inputChannel <-chan OutputComparisonResul
 		for {
 			select {
 			case <-ctx.Done():
-				log.Infoln("Cancelling comparison")
+				Log.Infoln("Cancelling comparison")
 				return
 			case toCompare, ok := <-inChan:
 				if !ok {
@@ -114,7 +111,7 @@ func compareFiles(ctx context.Context, inputChannel <-chan OutputComparisonResul
 				}
 				//Metrics
 				comparison_count.Add(1)
-				log.Debugf("Starting to compare {}", toCompare.Tokens[0])
+				Log.Debugf("Starting to compare {}", toCompare.Tokens[0])
 				sbmsnOne := toCompare.Tokens[0]
 				sbmsnTwo := toCompare.Tokens[1]
 				toCompare.SimilarityIndex = parser.Jaccard.Compare(sbmsnOne, sbmsnTwo)

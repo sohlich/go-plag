@@ -14,7 +14,12 @@ type ServerConfig struct {
 	Host string
 }
 
+type LogConfig struct {
+	Path string
+}
+
 type configFile struct {
 	Mongo  MongoConfig
 	Server ServerConfig
+	Log    LogConfig
 }

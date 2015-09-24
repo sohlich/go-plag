@@ -2,9 +2,7 @@ package main
 
 import (
 	"errors"
-	// "fmt"
 
-	log "github.com/Sirupsen/logrus"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 	"gopkg.in/validator.v2"
@@ -37,7 +35,7 @@ type Mongo struct {
 //Opens mongo session for given url and
 //sets the session to global property
 func (m *Mongo) OpenSession() error {
-	log.Infof(`Initializing MongoDB
+	Log.Infof(`Initializing MongoDB
 		Connection string: %s
 		Database: %s
 		Assignment collection: %s
@@ -183,11 +181,11 @@ func (m *Mongo) FindMaxSimilarityBySubmission(assignmentId string) {
 		{"$group": bson.M{"_id": "$submission", "maxSim": bson.M{"$max": "$similarity"}}}}
 	qryRes := make([]bson.M, 0)
 	m.results.Pipe(query).All(&qryRes)
-	log.Infoln(qryRes)
+	Log.Infoln(qryRes)
 }
 
 func ifErr(err error) {
 	if err != nil {
-		log.Errorln(err)
+		Log.Errorln(err)
 	}
 }

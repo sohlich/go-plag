@@ -5,10 +5,8 @@ import (
 	"bytes"
 	"io/ioutil"
 	"regexp"
-	// "strings"
 	"sync"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/satori/go.uuid"
 	"github.com/sohlich/go-plag/parser"
 )
@@ -35,7 +33,7 @@ func processSubmission(submission *Submission) error {
 		submissionFile.Submission = submissionID
 		tokContent, tokMap, err := parser.TokenizeContent(submissionFile.Content, submission.Lang)
 		if err != nil {
-			log.Errorf("Cannot process %s error: %s", submissionFile.Name, err)
+			Log.Errorf("Cannot process %s error: %s", submissionFile.Name, err)
 			submission_errors.Add(1)
 			continue
 		}
@@ -53,7 +51,7 @@ func unzipFile(content []byte, filter map[string]bool) (<-chan *SubmissionFile, 
 	r, err := zip.NewReader(bytes.NewReader(content), int64(len(content)))
 
 	if err != nil {
-		log.Error(err)
+		Log.Error(err)
 		return nil, err
 	}
 
@@ -76,7 +74,7 @@ func unzipFile(content []byte, filter map[string]bool) (<-chan *SubmissionFile, 
 				unzippedStream <- processed
 			}(f)
 		} else {
-			log.Infof("Not processing %s", f.Name)
+			Log.Infof("Not processing %s", f.Name)
 		}
 	}
 
@@ -94,12 +92,12 @@ func processFile(file *zip.File) (*SubmissionFile, error) {
 	submissionFile := &SubmissionFile{Name: file.Name}
 	rc, rcError := file.Open()
 	if rcError != nil {
-		log.Error(rcError)
+		Log.Error(rcError)
 		return nil, rcError
 	}
 	content, rError := ioutil.ReadAll(rc)
 	if rError != nil {
-		log.Error(rError)
+		Log.Error(rError)
 		return nil, rError
 	}
 	submissionFile.Content = string(content)

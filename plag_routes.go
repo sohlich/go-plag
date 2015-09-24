@@ -5,20 +5,19 @@ import (
 	"io/ioutil"
 	"strings"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/gin-gonic/gin"
-	// "gopkg.in/mgo.v2/bson"
+	"github.com/sohlich/go-plag/parser"
 )
 
 func putAssignment(ctx *gin.Context) {
 	assignment := &Assignment{}
 	ctx.BindJSON(assignment)
 
-	log.Debugf("assignment object %s", assignment)
+	Log.Debugf("assignment object %s", assignment)
 
 	_, err := mongo.Save(assignment)
 	if err != nil {
-		log.Error(err)
+		Log.Error(err)
 		ctx.JSON(405, "Object not stored")
 		return
 	}
@@ -39,7 +38,7 @@ func putSubmission(ctx *gin.Context) {
 	submission := &Submission{}
 	decoder.Decode(submission)
 
-	log.Info(submission.AssignmentID)
+	Log.Info(submission.AssignmentID)
 	assignment, mgoErr := mongo.FindOneAssignmentById(submission.AssignmentID)
 	if notifyError(mgoErr, ctx) {
 		return
@@ -57,15 +56,20 @@ func putSubmission(ctx *gin.Context) {
 	go func(sub *Submission, assGnmnt *Assignment) {
 		err := processSubmission(sub)
 		if err != nil {
-			log.Errorf("Error in processSubmission %s the error: %s", sub.ID, err.Error())
+			Log.Errorf("Error in processSubmission %s the error: %s", sub.ID, err.Error())
 		}
 		checkAssignment(assGnmnt)
 	}(submission, assignment)
 }
 
+func getSupportedLangs(ctx *gin.Context) {
+	Log.Infoln("Getting supported languages")
+	ctx.JSON(200, parser.GetSupportedLangs())
+}
+
 func notifyError(err error, ctx *gin.Context) bool {
 	if err != nil {
-		log.Error(err)
+		Log.Error(err)
 		ctx.JSON(405, err)
 		return true
 	}
