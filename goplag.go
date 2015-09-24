@@ -32,7 +32,7 @@ var (
 	comparison_count  = expvar.NewInt("comparison_count")
 	submission_errors = expvar.NewInt("submission_error")
 	cpuprofile        = flag.String("cpuprofile", "", "write cpu profile to file")
-	Log               *log.Logger
+	Log               = log.StandardLogger()
 )
 
 func main() {
