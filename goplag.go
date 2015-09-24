@@ -83,7 +83,8 @@ func main() {
 
 //Setup gin Engine server
 func initGin(ginEngine *gin.Engine) {
-	ginEngine.Use(logrusLogger()).PUT("/assignment", putAssignment)
+	ginEngine.Use(logrusLogger())
+	ginEngine.PUT("/assignment", putAssignment)
 	ginEngine.PUT("/submission", putSubmission)
 	ginEngine.GET("/plugin/langs", getSupportedLangs)
 	ginEngine.GET("/debug/vars", expvarGin.Handler())
@@ -91,6 +92,7 @@ func initGin(ginEngine *gin.Engine) {
 
 func loadPlugins() {
 	//Load plugins
+	parser.SetLogger(Log)
 	parser.LoadPlugins("plugin")
 }
 

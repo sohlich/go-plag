@@ -19,6 +19,12 @@ type Plugin struct {
 	FileFilter map[string]bool
 }
 
+var Log = log.StandardLogger()
+
+func SetLogger(logger *log.Logger) {
+	Log = logger
+}
+
 //Returnd initalized Plugin struct pointer
 //with created map
 func NewPlugin() *Plugin {
@@ -29,7 +35,7 @@ var pluginMap map[string]*Plugin = map[string]*Plugin{}
 
 //Tokenize document via java plugins
 func TokenizeContent(content, lang string) ([]uint32, map[string]int, error) {
-	log.Debugf("Starting to tokenize")
+	Log.Debugf("Starting to tokenize")
 
 	reader := strings.NewReader(content)
 	out, err := execJavaPlugin(reader, lang)
@@ -66,14 +72,14 @@ func execJavaPlugin(input io.Reader, pluginLanguage string) (string, error) {
 		return "", &NoSuchPluginError{pluginKey}
 	}
 
-	log.Debugf("Executing plugin %s", plugin.Path)
+	Log.Debugf("Executing plugin %s", plugin.Path)
 
 	cmd := execJava(plugin.Path, "parse")
 	cmd.Stdin = input
 	bs, err := cmd.CombinedOutput()
 	if err != nil {
 		cmd.Process.Signal(os.Kill)
-		log.Errorf(string(bs))
+		Log.Errorf(string(bs))
 		return "", err
 	}
 	return string(bs), nil
@@ -89,17 +95,17 @@ func LoadPlugins(dirPath string) {
 	//TODO better handle errors
 	filePaths, err := readFilesFromDir(dirPath)
 	if err != nil {
-		log.Errorln("Cannot load any plugin")
+		Log.Errorln("Cannot load any plugin")
 	}
 
 	for _, plugPath := range filePaths {
 		plugin, loadErr := loadPlugin(plugPath)
 		if loadErr == nil {
-			log.Infof("Loaded plugin for %c", plugin.Language)
+			Log.Infof("Loaded plugin for %c", plugin.Language)
 			pluginKey := strings.ToLower(plugin.Language)
 			pluginMap[pluginKey] = plugin
 		} else {
-			log.Errorf("Cannot load plugin %s because of %v", plugPath, loadErr)
+			Log.Errorf("Cannot load plugin %s because of %v", plugPath, loadErr)
 		}
 	}
 
