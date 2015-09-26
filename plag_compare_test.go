@@ -66,8 +66,8 @@ func (f *FakeDataStorage) FindAllComparableSubmissionFiles(submissionfile *Submi
 	return []SubmissionFile{}, nil
 }
 
-func (f *FakeDataStorage) FindMaxSimilarityBySubmission(assignmentId string) {
-
+func (f *FakeDataStorage) FindMaxSimilarityBySubmission(assignmentId string) ([]PlagiarismSync, error) {
+	return make([]PlagiarismSync, 0), nil
 }
 
 //TODO fix test

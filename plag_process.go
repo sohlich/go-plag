@@ -7,7 +7,7 @@ import (
 	"regexp"
 	"sync"
 
-	"github.com/satori/go.uuid"
+	//"github.com/satori/go.uuid"
 	"github.com/sohlich/go-plag/parser"
 )
 
@@ -28,7 +28,8 @@ func processSubmission(submission *Submission) error {
 	//Generate new submission
 	//Id for group of files
 	//and save the files
-	submissionID := uuid.NewV1().String()
+
+	submissionID := submission.ID //uuid.NewV1().String()
 	for submissionFile := range sChan {
 		submissionFile.Submission = submissionID
 		tokContent, tokMap, err := parser.TokenizeContent(submissionFile.Content, submission.Lang)
