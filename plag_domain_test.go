@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -28,11 +27,11 @@ func TestMongoConnectionFailed(t *testing.T) {
 	}
 }
 
-func TestIntegrationFindMaxSimilarities(t *testing.T) {
-	initStorage()
-	result, _ := mongo.FindMaxSimilarityBySubmission("55c7a86e8543eb08edca6b51")
-	fmt.Println(result)
-}
+// func TestIntegrationFindMaxSimilarities(t *testing.T) {
+// 	initStorage()
+// 	result, _ := mongo.FindMaxSimilarityBySubmission("55c7a86e8543eb08edca6b51")
+// 	fmt.Println(result)
+// }
 
 // func TestFindAllByAssignment(t *testing.T) {
 // 	initStorage()

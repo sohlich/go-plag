@@ -1,7 +1,6 @@
 package main
 
 import (
-	"expvar"
 	"flag"
 	"fmt"
 	"os"
@@ -16,7 +15,11 @@ import (
 )
 
 const (
-	config = "application.conf"
+	Version = "0.1"
+	Author  = "Radomir Sohlich <sohlich@gmail.com>"
+
+	//Application consts
+	config = "plag.conf"
 )
 
 var (
@@ -27,15 +30,15 @@ var (
 		SubmissionCollection: "submissions",
 		ResultCollection:     "results",
 	}
+	cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
+	Log        = log.StandardLogger()
 
 	//expvar
-	comparison_count  = expvar.NewInt("comparison_count")
-	submission_errors = expvar.NewInt("submission_error")
-	cpuprofile        = flag.String("cpuprofile", "", "write cpu profile to file")
-	Log               = log.StandardLogger()
+	metrics *Metrics
 )
 
 func main() {
+
 	flag.Parse()
 	if *cpuprofile != "" {
 		f, err := os.Create(*cpuprofile)
@@ -49,7 +52,7 @@ func main() {
 		}
 		defer pprof.StopCPUProfile()
 	}
-
+	// initMetrics()
 	//Load config
 	cfg := loadProperties(config)
 
@@ -57,15 +60,12 @@ func main() {
 
 	//Setup and init storage
 	mgoConf := cfg.Mongo
-	mgoConnString := fmt.Sprintf("%s:%s",
-		mgoConf.Host,
-		mgoConf.Port)
 	mgo, _ := mongo.(*Mongo)
 	mgo.AssignmentCollection = mgoConf.Assignments
 	mgo.ResultCollection = mgoConf.Results
 	mgo.SubmissionCollection = mgoConf.Submissions
 	mgo.Database = mgoConf.Database
-	mgo.ConnectionString = mgoConnString
+	mgo.ConnectionString = mgoConf.ConnectionString()
 	initStorage()
 	defer mgo.CloseSession()
 
@@ -81,33 +81,8 @@ func main() {
 	engine.Run(address)
 }
 
-//Setup gin Engine server
-func initGin(ginEngine *gin.Engine) {
-	ginEngine.Use(logrusLogger())
-	ginEngine.PUT("/assignment", putAssignment)
-	ginEngine.PUT("/submission", putSubmission)
-	ginEngine.GET("/plugin/langs", getSupportedLangs)
-	ginEngine.GET("/debug/vars", expvarGin.Handler())
-}
-
-func loadPlugins() {
-	//Load plugins
-	parser.SetLogger(Log)
-	parser.LoadPlugins("plugin")
-}
-
-func logrusLogger() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		Log.Infof("%s:%s from %s", c.Request.Method, c.Request.URL.String(), c.Request.RemoteAddr)
-	}
-}
-
-func initStorage() {
-	Log.Infoln("Initializing storage")
-	err := mongo.OpenSession()
-	if err != nil {
-		Log.Fatal(err)
-	}
+func initMetrics() {
+	metrics = NewMetrics()
 }
 
 func loadProperties(cfgFile string) configFile {
@@ -136,4 +111,34 @@ func NewLogger(path string) *log.Logger {
 		log.DebugLevel: path,
 	}))
 	return Log
+}
+
+//Load plugins
+func loadPlugins() {
+	//Load plugins
+	parser.SetLogger(Log)
+	parser.LoadPlugins("plugin")
+}
+
+//Setup gin Engine server
+func initGin(ginEngine *gin.Engine) {
+	ginEngine.Use(logrusLogger())
+	ginEngine.PUT("/assignment", putAssignment)
+	ginEngine.PUT("/submission", putSubmission)
+	ginEngine.GET("/plugin/langs", getSupportedLangs)
+	ginEngine.GET("/debug/vars", expvarGin.Handler())
+}
+
+func logrusLogger() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		Log.Infof("%s:%s from %s", c.Request.Method, c.Request.URL.String(), c.Request.RemoteAddr)
+	}
+}
+
+func initStorage() {
+	Log.Infoln("Initializing storage")
+	err := mongo.OpenSession()
+	if err != nil {
+		Log.Fatal(err)
+	}
 }

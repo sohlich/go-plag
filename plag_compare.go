@@ -1,91 +1,152 @@
 package main
 
 import (
+	"errors"
 	"sync"
 
 	"github.com/sohlich/go-plag/parser"
 	"golang.org/x/net/context"
 )
 
-var inProgressMap = make(map[string]context.CancelFunc)
-var mutex = new(sync.Mutex)
+//Errors
+var NoAssignmentError = errors.New("No assignment found")
 
-//TODO implement assignment check
-func checkAssignment(assignment *Assignment) int {
+var inProgressMap = NewJobMap()
 
-	//try to cancell previous running processes
-	mutex.Lock()
-	cancel, ok := inProgressMap[assignment.ID.Hex()]
-	mutex.Unlock()
+//Structure to hold comparison job contexts.
+//In case that some submission come before the
+//end of comparison job. The job is cancelled and
+//new job will be lounched to be sure all files are compared.
+type JobMap struct {
+	mutex  *sync.Mutex
+	jobMap map[string]context.CancelFunc
+}
 
+//Creates new instance of JobMap structure.
+func NewJobMap() *JobMap {
+	return &JobMap{
+		new(sync.Mutex),
+		make(map[string]context.CancelFunc),
+	}
+}
+
+//Return the context of job.
+//To be able to cancel the job.
+//Wraps the map two value assignment, to be
+// thread safe.
+func (j *JobMap) GetJob(assignmentId string) (context.CancelFunc, bool) {
+	j.mutex.Lock()
+	cancel, ok := j.jobMap[assignmentId]
+	j.mutex.Unlock()
+	return cancel, ok
+}
+
+//Directly tries to cancel the comparison job
+//on assignmentId key. If the key is present in map,
+//cancel function in context.Context will be called.
+func (j *JobMap) TryCancelJobFor(assignmentId string) bool {
+	cancel, ok := j.GetJob(assignmentId)
 	if ok {
 		Log.Debugln("Found previous running comparison job")
 		cancel()
 	}
+	return ok
+}
+
+//Puts the cancel function of give assignmentId
+//to storage.
+func (j *JobMap) PutJob(assignmentId string, cancel context.CancelFunc) {
+	j.mutex.Lock()
+	j.jobMap[assignmentId] = cancel
+	j.mutex.Unlock()
+}
+
+//Check the assignment for plagiats by comparing all
+//submissions in assignment.
+func checkAssignment(assignment *Assignment) error {
+
+	//Handle null assignment
+	if assignment == nil {
+		return NoAssignmentError
+	}
+
+	assignmentId := assignment.ID.Hex()
+
+	//try to cancell previous running processes
+	inProgressMap.TryCancelJobFor(assignmentId)
+
 	ctx, cancelFunc := context.WithCancel(context.TODO())
-	inProgressMap[assignment.ID.Hex()] = cancelFunc
+	inProgressMap.PutJob(assignmentId, cancelFunc)
 
 	//Obtain all assignment files
-	submissionFiles, err := mongo.FindAllSubmissionsByAssignment(assignment.ID.Hex())
+	submissionFiles, err :=
+		mongo.FindAllSubmissionsByAssignment(assignmentId)
 	if err != nil {
-		Log.Error(err)
-		return 0
+		return err
 	}
+
+	//Pipe the tuples -> comparison
 	processChanel := generateTuples(ctx, submissionFiles)
 	outpuchannel := compareFiles(ctx, processChanel)
 
-	compCount := 0
-
+	//Wait to process all comparisons
 	for {
 		select {
 		case <-ctx.Done():
 			Log.Infoln("Assignment check cancelled")
-			return compCount
+			return nil
 		case comparison, ok := <-outpuchannel:
 			if !ok {
-				Log.Infof("Comparison of %s done", assignment.ID.Hex())
-				mongo.FindMaxSimilarityBySubmission(assignment.ID.Hex())
-				return compCount
+				Log.Infof("Comparison of %s done", assignmentId)
+				mongo.FindMaxSimilarityBySubmission(assignmentId)
+				return nil
 			}
-			compCount++
-			// if !math.IsNaN(float64(comparison.SimilarityIndex)) {
 			_, err := mongo.Save(&comparison)
 			if err != nil {
 				Log.Error(err)
 			}
-			// }
 
 		}
 	}
+
+	return nil
 }
 
 //Generates non-repeating
 //tuples from give array
-func generateTuples(ctx context.Context, files []SubmissionFile) <-chan OutputComparisonResult {
+func generateTuples(ctx context.Context,
+	files []SubmissionFile) <-chan OutputComparisonResult {
+
 	output := make(chan OutputComparisonResult)
+
 	go func(chan OutputComparisonResult) {
 		defer close(output)
 		for i := 0; i < len(files); i++ {
 			for j := i + 1; j < len(files); j++ {
-
 				select {
 				case <-ctx.Done():
-					Log.Debugln("Generating of tuples canceled")
+					Log.Debugln("Cancelling tuple generation")
 					return
 				default:
-					//Do not compare files form same submission
-					if files[i].Submission == files[j].Submission {
+					//Do not compare files form same
+					//submission and owner
+					noCmpr := files[i].Submission == files[j].Submission
+					noCmpr = noCmpr || files[i].Owner == files[j].Owner
+					if noCmpr {
 						continue
 					}
 
-					tuple := OutputComparisonResult{
+					outFls := []string{files[i].ID.Hex(), files[j].ID.Hex()}
+					outSmsn := []string{files[i].Submission, files[j].Submission}
+					outTkns := []map[string]int{files[i].TokenMap, files[j].TokenMap}
+
+					output <- OutputComparisonResult{
 						Assignment:      files[i].Assignment,
-						Files:           []string{files[i].ID.Hex(), files[j].ID.Hex()},
-						Submissions:     []string{files[i].Submission, files[j].Submission},
-						Tokens:          []map[string]int{files[i].TokenMap, files[j].TokenMap},
+						Files:           outFls,
+						Submissions:     outSmsn,
+						Tokens:          outTkns,
 						SimilarityIndex: -1,
 					}
-					output <- tuple
 				}
 			}
 		}
@@ -96,25 +157,29 @@ func generateTuples(ctx context.Context, files []SubmissionFile) <-chan OutputCo
 //Receives OutputComparisonResult
 //from channel and return an output channel
 //with filled entity with comparison result
-func compareFiles(ctx context.Context, inputChannel <-chan OutputComparisonResult) <-chan OutputComparisonResult {
+func compareFiles(ctx context.Context,
+	inputChannel <-chan OutputComparisonResult) <-chan OutputComparisonResult {
+
 	outputChannel := make(chan OutputComparisonResult)
+
 	go func(inChan <-chan OutputComparisonResult) {
 		defer close(outputChannel)
 		for {
 			select {
 			case <-ctx.Done():
-				Log.Infoln("Cancelling comparison")
+				Log.Debugln("Cancelling comparison")
 				return
 			case toCompare, ok := <-inChan:
 				if !ok {
 					return
 				}
 				//Metrics
-				comparison_count.Add(1)
-				Log.Debugf("Starting to compare {}", toCompare.Tokens[0])
+				metrics.ComparisonInc()
 				sbmsnOne := toCompare.Tokens[0]
 				sbmsnTwo := toCompare.Tokens[1]
-				toCompare.SimilarityIndex = parser.Jaccard.Compare(sbmsnOne, sbmsnTwo)
+				toCompare.SimilarityIndex =
+					parser.Jaccard.Compare(sbmsnOne, sbmsnTwo)
+				Log.Debugf("Comparison of %v", toCompare)
 				outputChannel <- toCompare
 
 			}

@@ -36,6 +36,7 @@ func (object *Assignment) NewId() {
 //for submission
 type SubmissionFile struct {
 	ID         bson.ObjectId `bson:"_id"`
+	Owner      string        `omitempty`
 	Name       string
 	Assignment string
 	Submission string
@@ -70,4 +71,21 @@ type OutputComparisonResult struct {
 
 func (object *OutputComparisonResult) NewId() {
 	object.ID = bson.NewObjectId()
+}
+
+//Embedded Structure for sending similarities
+//to APAC system
+type ApacSubmissionSimilarity struct {
+	Uuid       string
+	Similarity float64
+}
+
+//Main strucutre to send similarities
+//to APAC system. This wraps one submission
+//and extracts the max similarity from all
+//comparisons of this submission
+type ApacPlagiarismSync struct {
+	Baseuuid    string                     //submission id
+	Similarity  float64                    //max similarity
+	Submissions []ApacSubmissionSimilarity //other submissions
 }

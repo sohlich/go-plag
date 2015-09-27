@@ -1,12 +1,16 @@
 package main
 
-type SubmissionSimilarity struct {
-	Uuid       string
-	Similarity float64
-}
+import (
+	"encoding/json"
+	"fmt"
+)
 
-type PlagiarismSync struct {
-	Baseuuid    string
-	Similarity  float64
-	Submissions []SubmissionSimilarity
+func syncWithApac(assignmentId string) {
+	result, err := mongo.FindMaxSimilarityBySubmission(assignmentId)
+	if err != nil {
+		return
+	}
+	bytes, err := json.Marshal(result)
+	fmt.Println(string(bytes))
+	// http.Post(url, bodyType, body)
 }

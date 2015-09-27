@@ -16,7 +16,7 @@ type DataStorage interface {
 	FindOneAssignmentById(id string) (*Assignment, error)
 	FindAllSubmissionsByAssignment(assignmentId string) ([]SubmissionFile, error)
 	FindAllComparableSubmissionFiles(submissionfile *SubmissionFile) ([]SubmissionFile, error)
-	FindMaxSimilarityBySubmission(assignmentId string) ([]PlagiarismSync, error)
+	FindMaxSimilarityBySubmission(assignmentId string) ([]ApacPlagiarismSync, error)
 }
 
 type Mongo struct {
@@ -175,14 +175,14 @@ func (m *Mongo) FindAllComparableSubmissionFiles(submissionF *SubmissionFile) ([
 
 //Extracts the similarity information for APAC
 //sync.
-func (m *Mongo) FindMaxSimilarityBySubmission(assignmentId string) ([]PlagiarismSync, error) {
+func (m *Mongo) FindMaxSimilarityBySubmission(assignmentId string) ([]ApacPlagiarismSync, error) {
 	query := []bson.M{
 		{"$match": bson.M{"assignment": assignmentId}},
 		{"$project": bson.M{"_id": 0, "uuid": "$submission", "uuid2": "$comparedTo.submission", "similarity": 1}},
 		{"$group": bson.M{"_id": "$uuid", "similarity": bson.M{"$max": "$similarity"}, "submissions": bson.M{"$addToSet": bson.M{"uuid": "$uuid2", "similarity": "$similarity"}}}},
 		{"$project": bson.M{"_id": 0, "baseuuid": "$_id", "similarity": 1, "submissions": 1}},
 	}
-	qryRes := make([]PlagiarismSync, 0)
+	qryRes := make([]ApacPlagiarismSync, 0)
 	err := m.results.Pipe(query).All(&qryRes)
 	return qryRes, err
 }

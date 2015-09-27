@@ -20,7 +20,6 @@ func (f *FakeDataStorage) OpenSession() error {
 }
 
 func (f *FakeDataStorage) CloseSession() {
-
 }
 
 func (m *FakeDataStorage) Save(object MongoObject) (interface{}, error) {
@@ -40,14 +39,12 @@ func (m *FakeDataStorage) FindSubmissionFileById(id string) (*SubmissionFile, er
 	fileTwo := &SubmissionFile{
 		TokenMap: map[string]int{"1": 4, "5": 2},
 	}
-
 	switch id {
 	case "1":
 		return fileOne, nil
 	case "2":
 		return fileTwo, nil
 	}
-
 	return fileOne, nil
 }
 
@@ -66,8 +63,20 @@ func (f *FakeDataStorage) FindAllComparableSubmissionFiles(submissionfile *Submi
 	return []SubmissionFile{}, nil
 }
 
-func (f *FakeDataStorage) FindMaxSimilarityBySubmission(assignmentId string) ([]PlagiarismSync, error) {
-	return make([]PlagiarismSync, 0), nil
+func (f *FakeDataStorage) FindMaxSimilarityBySubmission(assignmentId string) ([]ApacPlagiarismSync, error) {
+	result := []ApacPlagiarismSync{
+		ApacPlagiarismSync{
+			Baseuuid:   "10",
+			Similarity: 0.23,
+			Submissions: []ApacSubmissionSimilarity{
+				ApacSubmissionSimilarity{
+					Uuid:       "12",
+					Similarity: 0.23,
+				},
+			},
+		},
+	}
+	return result, nil
 }
 
 //TODO fix test
@@ -123,5 +132,5 @@ func TestCheckAssignmentPipeline(t *testing.T) {
 	defer func(s DataStorage) { mongo = s }(oldMongo)
 	assignment := &Assignment{ID: bson.NewObjectId()}
 	compCount := checkAssignment(assignment)
-	assert.True(t, compCount > 0, "No files were compared")
+	assert.True(t, compCount == nil, "Error in comparison")
 }
