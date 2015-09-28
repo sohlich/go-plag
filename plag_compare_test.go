@@ -27,7 +27,9 @@ func (m *FakeDataStorage) Save(object MongoObject) (interface{}, error) {
 }
 
 func (m *FakeDataStorage) FindOneAssignmentById(id string) (*Assignment, error) {
-	return nil, nil
+	return &Assignment{
+		Lang: JAVA,
+	}, nil
 }
 
 func (m *FakeDataStorage) FindSubmissionFileById(id string) (*SubmissionFile, error) {

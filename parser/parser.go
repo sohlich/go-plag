@@ -172,3 +172,8 @@ func GetSupportedLangs() []string {
 
 	return langs
 }
+
+func IsSupportedLang(lang string) bool {
+	_, ok := pluginMap[lang]
+	return ok
+}

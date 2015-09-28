@@ -12,6 +12,9 @@ import (
 func putAssignment(ctx *gin.Context) {
 	assignment := &Assignment{}
 	ctx.BindJSON(assignment)
+	if !assignment.Valid() {
+		ctx.JSON(405, "Invalid assignment definition")
+	}
 
 	Log.Debugf("assignment object %s", assignment)
 

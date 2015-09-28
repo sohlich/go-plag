@@ -32,6 +32,10 @@ func (object *Assignment) NewId() {
 	object.ID = bson.NewObjectId()
 }
 
+func (a *Assignment) Valid() bool {
+	return len(a.Name) > 0 && len(a.Lang) > 0
+}
+
 //Files from uploaded zipped file
 //for submission
 type SubmissionFile struct {
