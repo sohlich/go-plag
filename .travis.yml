@@ -4,9 +4,13 @@ go:
 jdk:
     - oraclejdk8
     
-sudo: false
+sudo: true
 notifications:
     email: false
+
+before_install:
+  - sudo apt-get update -qq
+  - sudo apt-get install  -y openjdk-8-jre
 
 install:
   - go get github.com/Sirupsen/logrus
