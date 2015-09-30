@@ -11,14 +11,24 @@ import (
 	"os"
 	"strings"
 	"testing"
+
+	"github.com/sohlich/go-plag/parser"
 )
 
-func TestPutAssignment(t *testing.T) {
+//Sets gin to testing mode and presets the
+//data storage to FakeDataStorage
+//to emulate the database.
+func preTest() (*gin.Engine, DataStorage) {
 	gin.SetMode(gin.TestMode)
 	oldMongo := mongo
 	mongo = &FakeDataStorage{}
-	defer func(s DataStorage) { mongo = s }(oldMongo)
 	router := gin.New()
+	return router, oldMongo
+}
+
+func TestPutAssignment(t *testing.T) {
+	router, oldMongo := preTest()
+	defer func(s DataStorage) { mongo = s }(oldMongo)
 
 	router.POST("/test", putAssignment)
 	w := httptest.NewRecorder()
@@ -31,11 +41,8 @@ func TestPutAssignment(t *testing.T) {
 }
 
 func TestPutAssignmenBadRequest(t *testing.T) {
-	gin.SetMode(gin.TestMode)
-	oldMongo := mongo
-	mongo = &FakeDataStorage{}
+	router, oldMongo := preTest()
 	defer func(s DataStorage) { mongo = s }(oldMongo)
-	router := gin.New()
 
 	router.POST("/test", putAssignment)
 	w := httptest.NewRecorder()
@@ -48,11 +55,8 @@ func TestPutAssignmenBadRequest(t *testing.T) {
 }
 
 func TestGetSupportedLangs(t *testing.T) {
-	gin.SetMode(gin.TestMode)
-	oldMongo := mongo
-	mongo = &FakeDataStorage{}
+	router, oldMongo := preTest()
 	defer func(s DataStorage) { mongo = s }(oldMongo)
-	router := gin.New()
 
 	router.GET("/test", getSupportedLangs)
 	w := httptest.NewRecorder()
@@ -64,14 +68,12 @@ func TestGetSupportedLangs(t *testing.T) {
 }
 
 func TestPutSubmission(t *testing.T) {
-	gin.SetMode(gin.TestMode)
-	oldMongo := mongo
-	mongo = &FakeDataStorage{}
+	parser.LoadPlugins("plugin")
+	router, oldMongo := preTest()
 	defer func(s DataStorage) { mongo = s }(oldMongo)
-	router := gin.New()
 
 	params := map[string]string{
-		"submission-meta": "{ \"owner\": \"'$p'\",   \"assignmentId\": \"55c7a86e8543eb08edca6b51\",   \"id\":\"'$p'\" }",
+		"submission-meta": "{ \"owner\": \"radek\",   \"assignmentId\": \"55c7a86e8543eb08edca6b51\",   \"id\":\"25\" }",
 	}
 	w := httptest.NewRecorder()
 	r, _ := newfileUploadRequest("/test", params, "submission-data", "test/test.zip")
@@ -80,6 +82,24 @@ func TestPutSubmission(t *testing.T) {
 	router.ServeHTTP(w, r)
 	if w.Code != 200 {
 		t.Errorf("Bad response %v", w)
+	}
+}
+
+func TestPutSubmissionInvalidAssignment(t *testing.T) {
+	parser.LoadPlugins("plugin")
+	router, oldMongo := preTest()
+	defer func(s DataStorage) { mongo = s }(oldMongo)
+
+	params := map[string]string{
+		"submission-meta": "{ \"owner\": \"'$p'\",   \"assignmentId\": \"\",   \"id\":\"'$p'\" }",
+	}
+	w := httptest.NewRecorder()
+	r, _ := newfileUploadRequest("/test", params, "submission-data", "test/test.zip")
+
+	router.POST("/test", putSubmission)
+	router.ServeHTTP(w, r)
+	if w.Code != 405 {
+		t.Errorf("Bad response expected %s got %v", 405, w)
 	}
 }
 

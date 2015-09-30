@@ -2,6 +2,7 @@ package parser
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -11,6 +12,8 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 )
+
+var UnsupportedLangError = errors.New("Language not supported")
 
 type Plugin struct {
 	Path       string
@@ -160,8 +163,14 @@ func loadPlugin(pluginPath string) (*Plugin, error) {
 	return plugin, nil
 }
 
-func GetLangFileFilter(lang string) map[string]bool {
-	return pluginMap[lang].FileFilter
+func GetLangFileFilter(lang string) (map[string]bool, error) {
+	plugin, ok := pluginMap[lang]
+	if ok {
+		return plugin.FileFilter, nil
+	} else {
+		return nil, UnsupportedLangError
+	}
+
 }
 
 func GetSupportedLangs() []string {

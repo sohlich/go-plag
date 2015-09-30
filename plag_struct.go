@@ -10,13 +10,6 @@ const (
 	JAVA Language = "java"
 )
 
-//
-// const (
-// 	NEW    string = "new"
-// 	CLOSED string = "closed"
-// 	SYNCED string = "synced"
-// )
-
 type MongoObject interface {
 	NewId()
 }
@@ -25,7 +18,6 @@ type Assignment struct {
 	ID   bson.ObjectId `bson:"_id"`
 	Name string
 	Lang Language
-	// State string
 }
 
 func (object *Assignment) NewId() {
@@ -61,6 +53,10 @@ type Submission struct {
 	AssignmentID string
 	Lang         string
 	Content      []byte //base64 file zip content
+}
+
+func (s *Submission) Valid() bool {
+	return len(s.AssignmentID) > 0
 }
 
 //DTO for fileComparison

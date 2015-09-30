@@ -42,11 +42,19 @@ func putSubmission(ctx *gin.Context) {
 	decoder.Decode(submission)
 
 	Log.Info(submission.AssignmentID)
+
+	if !submission.Valid() {
+		Log.Errorf("Invalid submission data %v", submission)
+		ctx.JSON(405, "Invalid submission data")
+		return
+	}
+
 	assignment, mgoErr := mongo.FindOneAssignmentById(submission.AssignmentID)
 	if notifyError(mgoErr, ctx) {
 		return
 	}
 	submission.Lang = string(assignment.Lang)
+	Log.Debug("Lang of submission is %v", submission.Lang)
 
 	//Read content and append to entity
 	fileContent, fError := ioutil.ReadAll(file)
