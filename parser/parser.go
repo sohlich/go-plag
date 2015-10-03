@@ -9,17 +9,40 @@ import (
 	"os/exec"
 	"path"
 	"strings"
+	"sync"
 
 	log "github.com/Sirupsen/logrus"
 )
 
 var UnsupportedLangError = errors.New("Language not supported")
 
+type Tokenizer interface {
+	ProcessFile(input io.Reader) (string, error)
+	ExtensionsFilter() map[string]bool
+}
+
 type Plugin struct {
 	Path       string
 	Language   string
 	Extensions []string
 	FileFilter map[string]bool
+}
+
+func (p *Plugin) ProcessFile(input io.Reader) (string, error) {
+	cmd := exec.Command("java", "-jar", p.Path, "parse")
+	cmd.Stdin = input
+	bs, err := cmd.CombinedOutput()
+	if err != nil {
+		cmd.Process.Signal(os.Kill)
+		Log.Errorf(string(bs))
+		return "", err
+	}
+	return string(bs), nil
+}
+
+//Return the map of supported file extensions
+func (p *Plugin) ExtensionsFilter() map[string]bool {
+	return p.FileFilter
 }
 
 var Log = log.StandardLogger()
@@ -34,7 +57,45 @@ func NewPlugin() *Plugin {
 	return &Plugin{FileFilter: make(map[string]bool)}
 }
 
-var pluginMap map[string]*Plugin = map[string]*Plugin{}
+type PluginMap struct {
+	mutex     *sync.Mutex
+	pluginMap map[string]Tokenizer
+}
+
+func NewPluginMap() *PluginMap {
+	pluginMap := &PluginMap{
+		new(sync.Mutex),
+		map[string]Tokenizer{},
+	}
+
+	return pluginMap
+}
+
+func (p *PluginMap) PutPlugin(lang string, tok Tokenizer) {
+	p.mutex.Lock()
+	p.pluginMap[lang] = tok
+	p.mutex.Unlock()
+}
+
+func (p *PluginMap) GetTokenizer(lang string) (Tokenizer, bool) {
+	p.mutex.Lock()
+	tok, ok := p.pluginMap[lang]
+	p.mutex.Unlock()
+	return tok, ok
+}
+
+func (p *PluginMap) GetLangs() []string {
+	p.mutex.Lock()
+	langs := make([]string, 0)
+	for lang, _ := range p.pluginMap {
+		langs = append(langs, lang)
+	}
+
+	p.mutex.Unlock()
+	return langs
+}
+
+var pluginMap = NewPluginMap()
 
 //Tokenize document via java plugins
 func TokenizeContent(content, lang string) ([]uint32, map[string]int, error) {
@@ -70,22 +131,13 @@ func TokenizeContent(content, lang string) ([]uint32, map[string]int, error) {
 //on assignment language
 func execJavaPlugin(input io.Reader, pluginLanguage string) (string, error) {
 	pluginKey := strings.ToLower(pluginLanguage)
-	plugin, ok := pluginMap[pluginKey]
+	plugin, ok := pluginMap.GetTokenizer(pluginKey)
 	if !ok {
 		return "", &NoSuchPluginError{pluginKey}
 	}
 
-	Log.Debugf("Executing plugin %s", plugin.Path)
-
-	cmd := execJava(plugin.Path, "parse")
-	cmd.Stdin = input
-	bs, err := cmd.CombinedOutput()
-	if err != nil {
-		cmd.Process.Signal(os.Kill)
-		Log.Errorf(string(bs))
-		return "", err
-	}
-	return string(bs), nil
+	Log.Debugf("Executing plugin %v", plugin)
+	return plugin.ProcessFile(input)
 }
 
 func execJava(path string, command string) *exec.Cmd {
@@ -106,7 +158,7 @@ func LoadPlugins(dirPath string) {
 		if loadErr == nil {
 			Log.Infof("Loaded plugin for %c", plugin.Language)
 			pluginKey := strings.ToLower(plugin.Language)
-			pluginMap[pluginKey] = plugin
+			pluginMap.PutPlugin(pluginKey, plugin)
 		} else {
 			Log.Errorf("Cannot load plugin %s because of %v", plugPath, loadErr)
 		}
@@ -118,10 +170,10 @@ func LoadPlugins(dirPath string) {
 //string slice with file paths
 func readFilesFromDir(dirPath string) ([]string, error) {
 	dir, err := os.Open(dirPath)
-
 	if err != nil {
 		return nil, err
 	}
+	defer dir.Close()
 
 	files, err := dir.Readdir(-1)
 
@@ -164,9 +216,9 @@ func loadPlugin(pluginPath string) (*Plugin, error) {
 }
 
 func GetLangFileFilter(lang string) (map[string]bool, error) {
-	plugin, ok := pluginMap[lang]
+	plugin, ok := pluginMap.GetTokenizer(lang)
 	if ok {
-		return plugin.FileFilter, nil
+		return plugin.ExtensionsFilter(), nil
 	} else {
 		return nil, UnsupportedLangError
 	}
@@ -174,15 +226,10 @@ func GetLangFileFilter(lang string) (map[string]bool, error) {
 }
 
 func GetSupportedLangs() []string {
-	langs := make([]string, 0)
-	for lang, _ := range pluginMap {
-		langs = append(langs, lang)
-	}
-
-	return langs
+	return pluginMap.GetLangs()
 }
 
 func IsSupportedLang(lang string) bool {
-	_, ok := pluginMap[lang]
+	_, ok := pluginMap.GetTokenizer(lang)
 	return ok
 }

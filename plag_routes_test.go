@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	// "fmt"
 	"github.com/gin-gonic/gin"
 	"io/ioutil"
 	"mime/multipart"
@@ -11,6 +10,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/sohlich/go-plag/parser"
 )
@@ -83,6 +83,7 @@ func TestPutSubmission(t *testing.T) {
 	if w.Code != 200 {
 		t.Errorf("Bad response %v", w)
 	}
+	time.Sleep(100 * time.Millisecond)
 }
 
 func TestPutSubmissionInvalidAssignment(t *testing.T) {
@@ -101,6 +102,8 @@ func TestPutSubmissionInvalidAssignment(t *testing.T) {
 	if w.Code != 405 {
 		t.Errorf("Bad response expected %s got %v", 405, w)
 	}
+
+	time.Sleep(100 * time.Millisecond)
 }
 
 // Creates a new file upload http request with optional extra params

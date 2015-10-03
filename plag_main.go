@@ -52,7 +52,7 @@ func main() {
 		}
 		defer pprof.StopCPUProfile()
 	}
-	// initMetrics()
+	initMetrics()
 	//Load config
 	cfg := loadProperties(config)
 
