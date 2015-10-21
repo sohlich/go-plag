@@ -36,4 +36,5 @@ type configFile struct {
 	Mongo  MongoConfig
 	Server ServerConfig
 	Log    LogConfig
+	Apac   ApacConfig
 }

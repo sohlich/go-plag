@@ -15,19 +15,6 @@ var (
 	extensionRegex = regexp.MustCompile("^.*\\.")
 )
 
-func processFromRequest(submission *Submission, assignment *Assignment) {
-	go func(sub *Submission, assGnmnt *Assignment) {
-		err := processSubmission(sub)
-		if err == nil {
-			err = checkAssignment(assGnmnt)
-		}
-
-		if err != nil {
-			Log.Errorf("Error in processSubmission %s the error: %s", sub.ID, err.Error())
-		}
-	}(submission, assignment)
-}
-
 //Process the submission that comes from api,
 //unzip, parse and save to database.
 func processSubmission(submission *Submission) error {

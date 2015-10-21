@@ -98,7 +98,10 @@ func checkAssignment(assignment *Assignment) error {
 		case comparison, ok := <-outpuchannel:
 			if !ok {
 				Log.Infof("Comparison of %s done", assignmentId)
-				mongo.FindMaxSimilarityBySubmission(assignmentId)
+				apacErr := syncWithApac(assignmentId)
+				if apacErr != nil {
+					Log.Error(apacErr)
+				}
 				return nil
 			}
 			_, err := mongo.Save(&comparison)

@@ -32,6 +32,7 @@ var (
 	}
 	cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
 	Log        = log.StandardLogger()
+	Apac       ApacConfig
 
 	//expvar
 	metrics *Metrics
@@ -57,6 +58,9 @@ func main() {
 	cfg := loadProperties(config)
 
 	Log = NewLogger(cfg.Log.Path)
+	Apac = cfg.Apac
+
+	Log.Infof("Apac path %s", Apac.Url)
 
 	//Setup and init storage
 	mgoConf := cfg.Mongo
@@ -99,9 +103,6 @@ func loadProperties(cfgFile string) configFile {
 
 //File logger for logrus
 func NewLogger(path string) *log.Logger {
-	if Log != nil {
-		return Log
-	}
 	//This creates new logger
 	Log = log.New()
 	Log.Formatter = new(log.JSONFormatter)
