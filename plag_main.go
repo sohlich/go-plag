@@ -125,7 +125,9 @@ func loadPlugins() {
 func initGin(ginEngine *gin.Engine) {
 	ginEngine.Use(logrusLogger())
 	ginEngine.PUT("/assignment", putAssignment)
+	ginEngine.POST("/assignment", putAssignment)
 	ginEngine.PUT("/submission", putSubmission)
+	ginEngine.POST("/submission", putSubmission)
 	ginEngine.GET("/plugin/langs", getSupportedLangs)
 	ginEngine.GET("/debug/vars", expvarGin.Handler())
 }

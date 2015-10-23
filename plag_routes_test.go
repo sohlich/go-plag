@@ -15,17 +15,6 @@ import (
 	"github.com/sohlich/go-plag/parser"
 )
 
-type MockPlugin struct {
-}
-
-func (m *MockPlugin) ProcessFile(input io.Reader) (string, error) {
-
-}
-
-func (m *MockPlugin) ExtensionsFilter() map[string]bool {
-
-}
-
 //Sets gin to testing mode and presets the
 //data storage to FakeDataStorage
 //to emulate the database.

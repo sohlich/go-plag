@@ -15,7 +15,7 @@ func putAssignment(ctx *gin.Context) {
 	if !assignment.Valid() {
 		ctx.JSON(405, "Invalid assignment definition")
 	}
-
+	assignment.Lang = Language(strings.ToLower(string(assignment.Lang)))
 	Log.Debugf("assignment object %s", assignment)
 
 	_, err := mongo.Save(assignment)

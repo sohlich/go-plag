@@ -76,8 +76,8 @@ func (object *OutputComparisonResult) NewId() {
 //Embedded Structure for sending similarities
 //to APAC system
 type ApacSubmissionSimilarity struct {
-	Uuid       string
-	Similarity float64
+	Uuid       string  `json:"uuid"`
+	Similarity float64 `json:"similarity"`
 }
 
 //Main strucutre to send similarities
@@ -85,7 +85,7 @@ type ApacSubmissionSimilarity struct {
 //and extracts the max similarity from all
 //comparisons of this submission
 type ApacPlagiarismSync struct {
-	Baseuuid    string                     //submission id
-	Similarity  float64                    //max similarity
-	Submissions []ApacSubmissionSimilarity //other submissions
+	Baseuuid    string                     `json:"baseuuid"`    //submission id
+	Similarity  float64                    `json:"similarity"`  //max similarity
+	Submissions []ApacSubmissionSimilarity `json:"submissions"` //other submissions
 }
