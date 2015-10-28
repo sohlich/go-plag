@@ -85,7 +85,7 @@ type ApacSubmissionSimilarity struct {
 //and extracts the max similarity from all
 //comparisons of this submission
 type ApacPlagiarismSync struct {
-	Baseuuid    string                     `json:"baseuuid"`    //submission id
-	Similarity  float64                    `json:"similarity"`  //max similarity
-	Submissions []ApacSubmissionSimilarity `json:"submissions"` //other submissions
+	Baseuuid    string                     `json:"baseUuid"`           //submission id
+	Similarity  float64                    `json:"similarity"`         //max similarity
+	Submissions []ApacSubmissionSimilarity `json:"similarSubmissions"` //other submissions
 }
