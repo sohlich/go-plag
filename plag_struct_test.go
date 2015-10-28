@@ -23,7 +23,7 @@ func TestJsonApac(t *testing.T) {
 	}
 	stringOutput := string(output)
 	log.Printf("APAC Serialization outout\n%s", stringOutput)
-	if !strings.Contains(stringOutput, "baseuuid") {
+	if !strings.Contains(stringOutput, "baseUuid") {
 		t.Error("Bad serialization output")
 	}
 }
