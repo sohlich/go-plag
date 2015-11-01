@@ -9,20 +9,24 @@ import (
 )
 
 //Errors
-var NoAssignmentError = errors.New("No assignment found")
+var ErrNoAssignment = errors.New("No assignment found")
 
 var inProgressMap = NewJobMap()
 
-//Structure to hold comparison job contexts.
+//JobMap is struct to hold comparison job contexts.
 //In case that some submission come before the
 //end of comparison job. The job is cancelled and
 //new job will be lounched to be sure all files are compared.
 type JobMap struct {
-	mutex  *sync.Mutex
+	mutex *sync.Mutex
+	//holds cancel func for assignmentID
 	jobMap map[string]context.CancelFunc
 }
 
-//Creates new instance of JobMap structure.
+//NewJobMap creates new instance
+//of JobMap structure. Which holds the
+//current running comparison jobs for
+//assignmentID
 func NewJobMap() *JobMap {
 	return &JobMap{
 		new(sync.Mutex),
@@ -30,22 +34,22 @@ func NewJobMap() *JobMap {
 	}
 }
 
-//Return the context of job.
+//GetJob returns the context of jobrunning job.
 //To be able to cancel the job.
 //Wraps the map two value assignment, to be
 // thread safe.
-func (j *JobMap) GetJob(assignmentId string) (context.CancelFunc, bool) {
+func (j *JobMap) GetJob(assignmentID string) (context.CancelFunc, bool) {
 	j.mutex.Lock()
-	cancel, ok := j.jobMap[assignmentId]
+	cancel, ok := j.jobMap[assignmentID]
 	j.mutex.Unlock()
 	return cancel, ok
 }
 
 //Directly tries to cancel the comparison job
-//on assignmentId key. If the key is present in map,
+//on assignmentID key. If the key is present in map,
 //cancel function in context.Context will be called.
-func (j *JobMap) TryCancelJobFor(assignmentId string) bool {
-	cancel, ok := j.GetJob(assignmentId)
+func (j *JobMap) TryCancelJobFor(assignmentID string) bool {
+	cancel, ok := j.GetJob(assignmentID)
 	if ok {
 		Log.Debugln("Found previous running comparison job")
 		cancel()
@@ -53,11 +57,11 @@ func (j *JobMap) TryCancelJobFor(assignmentId string) bool {
 	return ok
 }
 
-//Puts the cancel function of give assignmentId
+//Puts the cancel function of give assignmentID
 //to storage.
-func (j *JobMap) PutJob(assignmentId string, cancel context.CancelFunc) {
+func (j *JobMap) PutJob(assignmentID string, cancel context.CancelFunc) {
 	j.mutex.Lock()
-	j.jobMap[assignmentId] = cancel
+	j.jobMap[assignmentID] = cancel
 	j.mutex.Unlock()
 }
 
@@ -67,20 +71,20 @@ func checkAssignment(assignment *Assignment) error {
 
 	//Handle null assignment
 	if assignment == nil {
-		return NoAssignmentError
+		return ErrNoAssignment
 	}
 
-	assignmentId := assignment.ID.Hex()
+	assignmentID := assignment.ID.Hex()
 
 	//try to cancell previous running processes
-	inProgressMap.TryCancelJobFor(assignmentId)
+	inProgressMap.TryCancelJobFor(assignmentID)
 
 	ctx, cancelFunc := context.WithCancel(context.TODO())
-	inProgressMap.PutJob(assignmentId, cancelFunc)
+	inProgressMap.PutJob(assignmentID, cancelFunc)
 
 	//Obtain all assignment files
 	submissionFiles, err :=
-		mongo.FindAllSubmissionsByAssignment(assignmentId)
+		mongo.FindAllSubmissionsByAssignment(assignmentID)
 	if err != nil {
 		return err
 	}
@@ -95,10 +99,12 @@ func checkAssignment(assignment *Assignment) error {
 		case <-ctx.Done():
 			Log.Infoln("Assignment check cancelled")
 			return nil
-		case comparison, ok := <-outpuchannel:
-			if !ok {
-				Log.Infof("Comparison of %s done", assignmentId)
-				apacErr := syncWithApac(assignmentId)
+		case comparison, isOpen := <-outpuchannel:
+			if !isOpen {
+				//iIf all comparisons are done
+				//and channel is closed
+				Log.Infof("Comparison of %s done", assignmentID)
+				apacErr := syncWithApac(assignmentID)
 				if apacErr != nil {
 					Log.Error(apacErr)
 				}

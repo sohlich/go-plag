@@ -7,8 +7,8 @@ import (
 	"net/http"
 )
 
-func syncWithApac(assignmentId string) error {
-	result, err := mongo.FindMaxSimilarityBySubmission(assignmentId)
+func syncWithApac(assignmentID string) error {
+	result, err := mongo.FindMaxSimilarityBySubmission(assignmentID)
 	if err != nil {
 		return err
 	}
