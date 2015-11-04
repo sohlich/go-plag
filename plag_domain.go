@@ -15,7 +15,7 @@ type DataStorage interface {
 	OpenSession() error                    //OpenSession opens the session to mongodb server
 	CloseSession()                         //ClloseSession closes the session to mongodb server
 	Save(MongoObject) (interface{}, error) //Save save objects by its interface
-	FindSubmissionFileById(id string) (*SubmissionFile, error)
+	FindSubmissionFileByID(id string) (*SubmissionFile, error)
 	FindOneAssignmentByID(id string) (*Assignment, error)
 	FindAllSubmissionsByAssignment(assignmentID string) ([]SubmissionFile, error)
 	FindAllComparableSubmissionFiles(submissionfile *SubmissionFile) ([]SubmissionFile, error)
@@ -139,9 +139,9 @@ func (m *Mongo) FindOneAssignmentByID(id string) (*Assignment, error) {
 	return assignment, err
 }
 
-//FindSubmissionFileById finds submission file
+//FindSubmissionFileByID finds submission file
 //by its ID.
-func (m *Mongo) FindSubmissionFileById(id string) (*SubmissionFile, error) {
+func (m *Mongo) FindSubmissionFileByID(id string) (*SubmissionFile, error) {
 	sFile := &SubmissionFile{}
 	err := m.submissions.FindId(bson.ObjectIdHex(id)).One(sFile)
 	if err != nil {
@@ -150,28 +150,35 @@ func (m *Mongo) FindSubmissionFileById(id string) (*SubmissionFile, error) {
 	return sFile, err
 }
 
-func (m *Mongo) FindAllSubmissionsByAssignment(assignmentId string) ([]SubmissionFile, error) {
+//FindAllSubmissionsByAssignment finds
+//all submissions by assignmentID
+func (m *Mongo) FindAllSubmissionsByAssignment(assignmentID string) ([]SubmissionFile, error) {
 	var result []SubmissionFile
-	err := m.submissions.Find(bson.M{"assignment": assignmentId}).All(&result)
+	err := m.submissions.Find(bson.M{"assignment": assignmentID}).All(&result)
 	return result, err
 }
 
+//FindAllComparableSubmissionFiles finds
+//all files that shoudl be compared
+//to given SubmissionFile
 func (m *Mongo) FindAllComparableSubmissionFiles(submissionF *SubmissionFile) ([]SubmissionFile, error) {
 	var result []SubmissionFile
 	err := m.submissions.Find(bson.M{"$and": []bson.M{bson.M{"assignment": submissionF.Assignment}, bson.M{"submission": bson.M{"$ne": submissionF.Submission}}}}).All(&result)
 	return result, err
 }
 
-//Extracts the similarity information for APAC
+//FindMaxSimilarityBySubmission extracts
+//the similarity information for APAC
 //sync.
-func (m *Mongo) FindMaxSimilarityBySubmission(assignmentId string) ([]ApacPlagiarismSync, error) {
+func (m *Mongo) FindMaxSimilarityBySubmission(assignmentID string) ([]ApacPlagiarismSync, error) {
 	query := []bson.M{
-		{"$match": bson.M{"assignment": assignmentId}},
+		{"$match": bson.M{"assignment": assignmentID}},
 		{"$project": bson.M{"_id": 0, "uuid": "$submission", "uuid2": "$comparedTo.submission", "similarity": 1}},
 		{"$group": bson.M{"_id": "$uuid", "similarity": bson.M{"$max": "$similarity"}, "submissions": bson.M{"$addToSet": bson.M{"uuid": "$uuid2", "similarity": "$similarity"}}}},
 		{"$project": bson.M{"_id": 0, "baseuuid": "$_id", "similarity": 1, "submissions": 1}},
 	}
-	qryRes := make([]ApacPlagiarismSync, 0)
+	var qryRes []ApacPlagiarismSync
+	qryRes = make([]ApacPlagiarismSync, 0)
 	err := m.results.Pipe(query).All(&qryRes)
 	return qryRes, err
 }
