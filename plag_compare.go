@@ -45,7 +45,7 @@ func (j *JobMap) GetJob(assignmentID string) (context.CancelFunc, bool) {
 	return cancel, ok
 }
 
-//Directly tries to cancel the comparison job
+//TryCancelJobFor directly tries to cancel the comparison job
 //on assignmentID key. If the key is present in map,
 //cancel function in context.Context will be called.
 func (j *JobMap) TryCancelJobFor(assignmentID string) bool {
@@ -57,7 +57,7 @@ func (j *JobMap) TryCancelJobFor(assignmentID string) bool {
 	return ok
 }
 
-//Puts the cancel function of give assignmentID
+//PutJob puts the cancel function of give assignmentID
 //to storage.
 func (j *JobMap) PutJob(assignmentID string, cancel context.CancelFunc) {
 	j.mutex.Lock()

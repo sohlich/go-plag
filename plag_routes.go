@@ -49,7 +49,7 @@ func putSubmission(ctx *gin.Context) {
 		return
 	}
 
-	assignment, mgoErr := mongo.FindOneAssignmentById(submission.AssignmentID)
+	assignment, mgoErr := mongo.FindOneAssignmentByID(submission.AssignmentID)
 	if notifyError(mgoErr, ctx) {
 		return
 	}

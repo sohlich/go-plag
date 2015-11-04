@@ -18,7 +18,7 @@ func syncWithApac(assignmentID string) error {
 	}
 	Log.Infof("Syncing to APAC %v", string(byteBody))
 	reader := bytes.NewReader(byteBody)
-	res, apacErr := http.Post(Apac.Url, "application/json", reader)
+	res, apacErr := http.Post(Apac.URL, "application/json", reader)
 	if res != nil {
 		Log.Infof("APAC response code %v", res.StatusCode)
 		resBytes, _ := ioutil.ReadAll(res.Body)

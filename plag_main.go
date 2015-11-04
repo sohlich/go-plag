@@ -60,7 +60,7 @@ func main() {
 	Log = NewLogger(cfg.Log.Path)
 	Apac = cfg.Apac
 
-	Log.Infof("Apac path %s", Apac.Url)
+	Log.Infof("Apac path %s", Apac.URL)
 
 	//Setup and init storage
 	mgoConf := cfg.Mongo

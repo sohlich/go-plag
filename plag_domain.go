@@ -8,17 +8,22 @@ import (
 	"gopkg.in/validator.v2"
 )
 
+//DataStorage provides the
+//interface for data storing
+//in application
 type DataStorage interface {
-	OpenSession() error
-	CloseSession()
-	Save(MongoObject) (interface{}, error)
+	OpenSession() error                    //OpenSession opens the session to mongodb server
+	CloseSession()                         //ClloseSession closes the session to mongodb server
+	Save(MongoObject) (interface{}, error) //Save save objects by its interface
 	FindSubmissionFileById(id string) (*SubmissionFile, error)
-	FindOneAssignmentById(id string) (*Assignment, error)
-	FindAllSubmissionsByAssignment(assignmentId string) ([]SubmissionFile, error)
+	FindOneAssignmentByID(id string) (*Assignment, error)
+	FindAllSubmissionsByAssignment(assignmentID string) ([]SubmissionFile, error)
 	FindAllComparableSubmissionFiles(submissionfile *SubmissionFile) ([]SubmissionFile, error)
-	FindMaxSimilarityBySubmission(assignmentId string) ([]ApacPlagiarismSync, error)
+	FindMaxSimilarityBySubmission(assignmentID string) ([]ApacPlagiarismSync, error)
 }
 
+//Mongo implements the storage
+//at mongodb.
 type Mongo struct {
 	ConnectionString     string
 	Database             string `validate:"nonzero"`
@@ -32,7 +37,8 @@ type Mongo struct {
 	db                   *mgo.Database
 }
 
-//Opens mongo session for given url and
+//OpenSession opens connection/session for mongo session
+//for given url and
 //sets the session to global property
 func (m *Mongo) OpenSession() error {
 	Log.Infof(`Initializing MongoDB
@@ -72,11 +78,14 @@ func (m *Mongo) OpenSession() error {
 	return nil
 }
 
-//Silently close mongo session
+//CloseSession closes
+//the connection to mongodb
 func (m *Mongo) CloseSession() {
 	m.mongoSession.Close()
 }
 
+//Save saves given MongoObject
+//to mongodb database
 func (m *Mongo) Save(object MongoObject) (interface{}, error) {
 	var err error
 
@@ -95,31 +104,7 @@ func (m *Mongo) Save(object MongoObject) (interface{}, error) {
 	return object, err
 }
 
-// func (m *Mongo) updateSimilarityResults(comparison *OutputComparisonResult) error {
-
-// 	updateMap := bson.M{"id": comparison.Files[1]}
-// 	file1Query := bson.M{"_id": comparison.Files[0], "submission": comparison.Submissions[0], "assignment": comparison.Assignment}
-// 	file1Pull := bson.M{"$pull": bson.M{"similarities": updateMap}}
-// 	_, err := m.results.Upsert(file1Query, file1Pull)
-
-// 	updateMap["submission"] = comparison.Submissions[1]
-// 	updateMap["val"] = comparison.SimilarityIndex
-// 	file1Update := bson.M{"$push": bson.M{"similarities": updateMap}}
-// 	_, err = m.results.Upsert(file1Query, file1Update)
-
-// 	file2Query := bson.M{"_id": comparison.Files[1], "submission": comparison.Submissions[1], "assignment": comparison.Assignment}
-// 	file2Pull := bson.M{"$pull": bson.M{"similarities": bson.M{"id": comparison.Files[0]}}}
-// 	file2Update := bson.M{"$push": bson.M{"similarities": bson.M{"id": comparison.Files[0],
-// 		"submission": comparison.Submissions[0],
-// 		"val":        comparison.SimilarityIndex}}}
-
-// 	//TODO do in single call after bulk upsert available
-// 	_, err = m.results.Upsert(file2Query, file2Pull)
-// 	_, err = m.results.Upsert(file2Query, file2Update)
-
-// 	return err
-// }
-
+//updateSimilarityResults Upserts the similarity results.
 func (m *Mongo) updateSimilarityResults(comparison *OutputComparisonResult) error {
 
 	fileQuery := bson.M{"fileId": comparison.Files[0],
@@ -143,7 +128,9 @@ func (m *Mongo) updateSimilarityResults(comparison *OutputComparisonResult) erro
 	return err
 }
 
-func (m *Mongo) FindOneAssignmentById(id string) (*Assignment, error) {
+//FindOneAssignmentByID finds the
+//assignment by given id
+func (m *Mongo) FindOneAssignmentByID(id string) (*Assignment, error) {
 	assignment := &Assignment{}
 	err := m.assignments.FindId(bson.ObjectIdHex(id)).One(assignment)
 	if err != nil {
@@ -152,6 +139,8 @@ func (m *Mongo) FindOneAssignmentById(id string) (*Assignment, error) {
 	return assignment, err
 }
 
+//FindSubmissionFileById finds submission file
+//by its ID.
 func (m *Mongo) FindSubmissionFileById(id string) (*SubmissionFile, error) {
 	sFile := &SubmissionFile{}
 	err := m.submissions.FindId(bson.ObjectIdHex(id)).One(sFile)
