@@ -15,11 +15,11 @@ import (
 )
 
 const (
+	//Version of system
 	Version = "0.1"
-	Author  = "Radomir Sohlich <sohlich@gmail.com>"
-
-	//Application consts
-	config = "plag.conf"
+	//Author is maintainer of system
+	Author = "Radomir Sohlich <sohlich@gmail.com>"
+	config = "plag.conf" //configuration file
 )
 
 var (
@@ -31,8 +31,10 @@ var (
 		ResultCollection:     "results",
 	}
 	cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
-	Log        = log.StandardLogger()
-	Apac       ApacConfig
+	//Log is Global logger
+	Log = log.StandardLogger()
+	//Apac is config for apac
+	Apac ApacConfig
 
 	//expvar
 	metrics *Metrics
@@ -101,7 +103,8 @@ func loadProperties(cfgFile string) configFile {
 	return cfg
 }
 
-//File logger for logrus
+//NewLogger creates a
+//logger  for logrus
 func NewLogger(path string) *log.Logger {
 	//This creates new logger
 	Log = log.New()
