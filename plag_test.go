@@ -21,13 +21,13 @@ func (m *FakeDataStorage) Save(object MongoObject) (interface{}, error) {
 	return nil, nil
 }
 
-func (m *FakeDataStorage) FindOneAssignmentById(id string) (*Assignment, error) {
+func (m *FakeDataStorage) FindOneAssignmentByID(id string) (*Assignment, error) {
 	return &Assignment{
-		Lang: JAVA,
+		Lang: Language("java"),
 	}, nil
 }
 
-func (m *FakeDataStorage) FindSubmissionFileById(id string) (*SubmissionFile, error) {
+func (m *FakeDataStorage) FindSubmissionFileByID(id string) (*SubmissionFile, error) {
 	fileOne := &SubmissionFile{
 
 		TokenMap: map[string]int{"1": 2, "5": 3},
@@ -67,7 +67,7 @@ func (f *FakeDataStorage) FindMaxSimilarityBySubmission(assignmentId string) ([]
 			Similarity: 0.23,
 			Submissions: []ApacSubmissionSimilarity{
 				ApacSubmissionSimilarity{
-					Uuid:       "12",
+					UUID:       "12",
 					Similarity: 0.23,
 				},
 			},

@@ -21,8 +21,8 @@ func TestCompareFiles(t *testing.T) {
 	ctx, _ := context.WithCancel(context.TODO())
 	outputChannel := compareFiles(ctx, inputChan)
 	go func() {
-		f1, _ := mongo.FindSubmissionFileById("1")
-		f2, _ := mongo.FindSubmissionFileById("2")
+		f1, _ := mongo.FindSubmissionFileByID("1")
+		f2, _ := mongo.FindSubmissionFileByID("2")
 		inputChan <- OutputComparisonResult{
 			Files:  []string{"1", "2"},
 			Tokens: []map[string]int{f1.TokenMap, f2.TokenMap},

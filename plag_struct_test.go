@@ -13,7 +13,7 @@ func TestJsonApac(t *testing.T) {
 		Similarity: 0.24,
 		Submissions: []ApacSubmissionSimilarity{
 			ApacSubmissionSimilarity{
-				Uuid:       "1234",
+				UUID:       "1234",
 				Similarity: 1,
 			}},
 	}
