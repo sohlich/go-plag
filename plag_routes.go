@@ -81,6 +81,22 @@ func getSupportedLangs(ctx *gin.Context) {
 	ctx.JSON(200, parser.GetSupportedLangs())
 }
 
+func healthCheck(ctx *gin.Context) {
+	if metrics != nil {
+		metricsObject := struct {
+			Errors      string
+			Comparisons string
+			Database    string
+		}{
+			metrics.GetErrors(),
+			metrics.GetComparisons(),
+			metrics.GetDatabaseState(),
+		}
+
+		ctx.JSON(200, metricsObject)
+	}
+}
+
 func notifyError(err error, ctx *gin.Context) bool {
 	if err != nil {
 		Log.Error(err)

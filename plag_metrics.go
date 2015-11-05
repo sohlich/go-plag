@@ -5,6 +5,14 @@ import (
 	"expvar"
 )
 
+const (
+	//DatabaseOK  is databse state if everything is OK.
+	DatabaseOK = "OK"
+	//DatabaseNotConnected  is database
+	//state if some errors in connection occurs
+	DatabaseNotConnected = "NOT CONNECTED"
+)
+
 var (
 	//ErrMetricsNotInitialized occurs if
 	//metrics are not analyzed
@@ -22,6 +30,7 @@ type Metrics struct {
 	initialized bool
 	comparison  *expvar.Int
 	errors      *expvar.Int
+	database    *expvar.String
 }
 
 //NewMetrics creates
@@ -31,6 +40,7 @@ func NewMetrics() *Metrics {
 		true,
 		expvar.NewInt("comparisons"),
 		expvar.NewInt("errors"),
+		expvar.NewString("database"),
 	}
 	return metrics
 }
@@ -69,18 +79,35 @@ func (m *Metrics) ErrorInc() error {
 	})
 }
 
-//GerErrors returns the number of
+//SetDatabaseState sets the state of database
+//for displaying in health check
+func (m *Metrics) SetDatabaseState(state string) error {
+	return m.doIfNotNil(func() {
+		m.database.Set(state)
+	})
+}
+
+//GetDatabaseState retrieves the state of database
+//for displaying in health check
+func (m *Metrics) GetDatabaseState() string {
+	if m.errors != nil {
+		return m.database.String()
+	}
+	return ""
+}
+
+//GetErrors returns the number of
 //errors
-func (m *Metrics) GerErrors() string {
+func (m *Metrics) GetErrors() string {
 	if m.errors != nil {
 		return m.errors.String()
 	}
 	return ""
 }
 
-//GerComparisons returns the string value
+//GetComparisons returns the string value
 //of comparison count
-func (m *Metrics) GerComparisons() string {
+func (m *Metrics) GetComparisons() string {
 	if m.comparison != nil {
 		return m.comparison.String()
 	}

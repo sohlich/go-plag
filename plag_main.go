@@ -114,7 +114,25 @@ func NewLogger(path string) *log.Logger {
 		log.ErrorLevel: path,
 		log.DebugLevel: path,
 	}))
+	Log.Hooks.Add(&metricsHook{
+		metrics,
+	})
 	return Log
+}
+
+type metricsHook struct {
+	metrics *Metrics
+}
+
+func (m *metricsHook) Levels() []log.Level {
+	return []log.Level{
+		log.ErrorLevel,
+	}
+}
+
+func (m *metricsHook) Fire(entry *log.Entry) error {
+	m.metrics.ErrorInc()
+	return nil
 }
 
 //Load plugins
@@ -127,12 +145,11 @@ func loadPlugins() {
 //Setup gin Engine server
 func initGin(ginEngine *gin.Engine) {
 	ginEngine.Use(logrusLogger())
-	ginEngine.PUT("/assignment", putAssignment)
 	ginEngine.POST("/assignment", putAssignment)
-	ginEngine.PUT("/submission", putSubmission)
 	ginEngine.POST("/submission", putSubmission)
 	ginEngine.GET("/plugin/langs", getSupportedLangs)
 	ginEngine.GET("/debug/vars", expvarGin.Handler())
+	ginEngine.GET("/health", healthCheck)
 }
 
 func logrusLogger() gin.HandlerFunc {
@@ -147,4 +164,5 @@ func initStorage() {
 	if err != nil {
 		Log.Fatal(err)
 	}
+	metrics.SetDatabaseState(DatabaseOK)
 }

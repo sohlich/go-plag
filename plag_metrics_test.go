@@ -14,11 +14,11 @@ func TestMetricsNotInitialized(t *testing.T) {
 
 func TestNewMetrics(t *testing.T) {
 	metrics = NewMetrics()
-	if metrics.GerErrors() != "0" {
+	if metrics.GetErrors() != "0" {
 		t.Error("Metrics does not increment errors")
 	}
 
-	if metrics.GerComparisons() != "0" {
+	if metrics.GetComparisons() != "0" {
 		t.Error("Metrics does not increment comparisons")
 	}
 }
