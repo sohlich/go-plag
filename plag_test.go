@@ -17,17 +17,17 @@ func (f *FakeDataStorage) OpenSession() error {
 func (f *FakeDataStorage) CloseSession() {
 }
 
-func (m *FakeDataStorage) Save(object MongoObject) (interface{}, error) {
+func (f *FakeDataStorage) Save(object MongoObject) (interface{}, error) {
 	return nil, nil
 }
 
-func (m *FakeDataStorage) FindOneAssignmentByID(id string) (*Assignment, error) {
+func (f *FakeDataStorage) FindOneAssignmentByID(id string) (*Assignment, error) {
 	return &Assignment{
 		Lang: Language("java"),
 	}, nil
 }
 
-func (m *FakeDataStorage) FindSubmissionFileByID(id string) (*SubmissionFile, error) {
+func (f *FakeDataStorage) FindSubmissionFileByID(id string) (*SubmissionFile, error) {
 	fileOne := &SubmissionFile{
 
 		TokenMap: map[string]int{"1": 2, "5": 3},
@@ -45,7 +45,7 @@ func (m *FakeDataStorage) FindSubmissionFileByID(id string) (*SubmissionFile, er
 	return fileOne, nil
 }
 
-func (f *FakeDataStorage) FindAllSubmissionsByAssignment(assignmentId string) ([]SubmissionFile, error) {
+func (f *FakeDataStorage) FindAllSubmissionsByAssignment(assignmentID string) ([]SubmissionFile, error) {
 
 	return []SubmissionFile{
 		SubmissionFile{Submission: "1", ID: bson.NewObjectId()},
@@ -60,7 +60,7 @@ func (f *FakeDataStorage) FindAllComparableSubmissionFiles(submissionfile *Submi
 	return []SubmissionFile{}, nil
 }
 
-func (f *FakeDataStorage) FindMaxSimilarityBySubmission(assignmentId string) ([]ApacPlagiarismSync, error) {
+func (f *FakeDataStorage) FindMaxSimilarityBySubmission(assignmentID string) ([]ApacPlagiarismSync, error) {
 	result := []ApacPlagiarismSync{
 		ApacPlagiarismSync{
 			Baseuuid:   "10",
