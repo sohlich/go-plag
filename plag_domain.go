@@ -89,7 +89,7 @@ func (m *Mongo) CloseSession() {
 func (m *Mongo) Save(object MongoObject) (interface{}, error) {
 	var err error
 
-	object.NewId()
+	object.NewID()
 
 	if _, ok := object.(*Assignment); ok {
 		err = m.assignments.Insert(object)

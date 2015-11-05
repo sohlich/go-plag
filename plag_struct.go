@@ -4,31 +4,43 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
+//Language defines the
+//assignment tyoe
 type Language string
 
-const (
-	JAVA Language = "java"
-)
-
+//MongoObject is common interface
+//for handling Ids in structs
 type MongoObject interface {
-	NewId()
+	NewID()
 }
 
+//Assignment is a strucutre
+//that holds one assignmen
+//in DataStorage. The name is
+//human readable identifier
+//Lang defines the programming
+//language that the assignment is
+//for
 type Assignment struct {
 	ID   bson.ObjectId `bson:"_id"`
 	Name string
 	Lang Language
 }
 
-func (object *Assignment) NewId() {
-	object.ID = bson.NewObjectId()
+//NewID generates new bson.ObjectId
+//for assignment.
+func (a *Assignment) NewID() {
+	a.ID = bson.NewObjectId()
 }
 
+//Valid returns id the assignemtn
+// has valid attributes.
 func (a *Assignment) Valid() bool {
 	return len(a.Name) > 0 && len(a.Lang) > 0
 }
 
-//Files from uploaded zipped file
+//SubmissionFile holds the files
+//from uploaded zipped file
 //for submission
 type SubmissionFile struct {
 	ID         bson.ObjectId `bson:"_id"`
@@ -42,24 +54,29 @@ type SubmissionFile struct {
 	TokenMap   map[string]int
 }
 
-func (object *SubmissionFile) NewId() {
-	object.ID = bson.NewObjectId()
+//NewID generates new bson.ObjectId
+//for SubmisisonFile.
+func (sf *SubmissionFile) NewID() {
+	sf.ID = bson.NewObjectId()
 }
 
-//DTO for http
+//Submission is dto for REST
 type Submission struct {
 	ID           string
 	Owner        string
 	AssignmentID string
 	Lang         string
-	Content      []byte //base64 file zip content
+	Content      []byte
 }
 
+//Valid returns if the structure has
+//valid properties.
 func (s *Submission) Valid() bool {
 	return len(s.AssignmentID) > 0
 }
 
-//DTO for fileComparison
+//OutputComparisonResult is output dto for
+//file comparison process.
 type OutputComparisonResult struct {
 	ID              bson.ObjectId `bson:"_id"`
 	Assignment      string
@@ -69,18 +86,21 @@ type OutputComparisonResult struct {
 	SimilarityIndex float32
 }
 
-func (object *OutputComparisonResult) NewId() {
-	object.ID = bson.NewObjectId()
+//NewID generates new bson.ObjectId
+//for struct.
+func (ocr *OutputComparisonResult) NewID() {
+	ocr.ID = bson.NewObjectId()
 }
 
-//Embedded Structure for sending similarities
+//ApacSubmissionSimilarity is embedded struct
+//for sending similarities
 //to APAC system
 type ApacSubmissionSimilarity struct {
-	Uuid       string  `json:"uuid"`
+	UUID       string  `json:"uuid"`
 	Similarity float64 `json:"similarity"`
 }
 
-//Main strucutre to send similarities
+//ApacPlagiarismSync is strucutre to send similarities
 //to APAC system. This wraps one submission
 //and extracts the max similarity from all
 //comparisons of this submission
