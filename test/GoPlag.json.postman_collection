@@ -1,0 +1,89 @@
+{
+	"id": "c9e56065-40f1-e813-fc07-74da17028f02",
+	"name": "Go Plag",
+	"description": "",
+	"order": [
+		"85b6414d-41df-59c9-9c7d-8469c62b0ce7",
+		"07c7c2ab-699d-8504-5cc6-25ac516e1ba1",
+		"81733a87-339f-b86c-d49b-ef5695715e66"
+	],
+	"folders": [],
+	"timestamp": 1439090228855,
+	"owner": 0,
+	"remoteLink": "",
+	"public": false,
+	"requests": [
+		{
+			"id": "07c7c2ab-699d-8504-5cc6-25ac516e1ba1",
+			"headers": "",
+			"url": "http://localhost:8080/submission",
+			"preRequestScript": "",
+			"pathVariables": {},
+			"method": "PUT",
+			"data": [
+				{
+					"key": "submission-meta",
+					"value": "{ \"owner\": \"rada\", \"assignmentId\": \"55c7b6ebe13823356f000001\",  \"id\": \"62\" }",
+					"type": "text",
+					"enabled": true
+				},
+				{
+					"key": "submission-data",
+					"value": null,
+					"type": "file",
+					"enabled": true
+				}
+			],
+			"dataMode": "params",
+			"version": 2,
+			"tests": "",
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1445528787464,
+			"name": "Create Submission",
+			"description": "Send submission for assignment.",
+			"collectionId": "c9e56065-40f1-e813-fc07-74da17028f02",
+			"responses": []
+		},
+		{
+			"id": "81733a87-339f-b86c-d49b-ef5695715e66",
+			"headers": "",
+			"url": "localhost:8080/plugin/langs",
+			"preRequestScript": "",
+			"pathVariables": {},
+			"method": "GET",
+			"data": [],
+			"dataMode": "params",
+			"version": 2,
+			"tests": "",
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1450547892455,
+			"name": "Get Supported Langs",
+			"description": "",
+			"collectionId": "c9e56065-40f1-e813-fc07-74da17028f02",
+			"responses": []
+		},
+		{
+			"id": "85b6414d-41df-59c9-9c7d-8469c62b0ce7",
+			"headers": "",
+			"url": "http://localhost:8080/assignment",
+			"pathVariables": {},
+			"preRequestScript": "",
+			"method": "PUT",
+			"collectionId": "c9e56065-40f1-e813-fc07-74da17028f02",
+			"data": [],
+			"dataMode": "raw",
+			"name": "Create Assignment",
+			"description": "Create Assignment to accept submissions.",
+			"descriptionFormat": "html",
+			"time": 1439090317004,
+			"version": 2,
+			"responses": [],
+			"tests": "",
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"rawModeData": "{\n\"name\": \"Test1\",\n\"lang\": \"java\"\n}"
+		}
+	]
+}
