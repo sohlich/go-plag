@@ -83,7 +83,7 @@ func TestPutSubmission(t *testing.T) {
 	if w.Code != 200 {
 		t.Errorf("Bad response %v", w)
 	}
-	time.Sleep(100 * time.Millisecond)
+	time.Sleep(100 * time.Millisecond) //TODO solve DATA RACE in test
 }
 
 func TestPutSubmissionInvalidAssignment(t *testing.T) {
