@@ -37,6 +37,22 @@ type Mongo struct {
 	db                   *mgo.Database
 }
 
+// Name returns the name
+// for a health checker
+func (m *Mongo) Name() string {
+	return "MongoDatabase"
+}
+
+// IsHealthy returns is
+// healthy if at least one
+// server is alive.
+func (m *Mongo) IsHealthy() bool {
+	if len(m.mongoSession.LiveServers()) > 0 {
+		return true
+	}
+	return false
+}
+
 //OpenSession opens connection/session for mongo session
 //for given url and
 //sets the session to global property

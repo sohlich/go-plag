@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"runtime/pprof"
+	"time"
 
 	"code.google.com/p/gcfg"
 	log "github.com/Sirupsen/logrus"
@@ -12,6 +13,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/rifflock/lfshook"
 	"github.com/sohlich/go-plag/parser"
+	"github.com/sohlich/healthcheck"
 )
 
 const (
@@ -37,7 +39,8 @@ var (
 	Apac ApacConfig
 
 	//expvar
-	metrics *Metrics
+	metrics       *Metrics
+	healthChecker = healthcheck.New(time.Minute)
 )
 
 func main() {
@@ -74,6 +77,16 @@ func main() {
 	mgo.ConnectionString = mgoConf.ConnectionString()
 	initStorage()
 	defer mgo.CloseSession()
+
+	healthChecker.RegisterIndicator(mgo)
+	healthChecker.Start()
+	healthChecker.AddHook("main", func(res map[string]bool) {
+		if res[mgo.Name()] {
+			metrics.SetDatabaseState(DatabaseOK)
+		} else {
+			metrics.SetDatabaseState(DatabaseNotConnected)
+		}
+	})
 
 	//Load plugins
 	loadPlugins()
@@ -164,5 +177,5 @@ func initStorage() {
 	if err != nil {
 		Log.Fatal(err)
 	}
-	metrics.SetDatabaseState(DatabaseOK)
+	// metrics.SetDatabaseState(DatabaseOK)
 }

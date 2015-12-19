@@ -17,3 +17,31 @@
 {"level":"info","msg":"Loaded plugin for %!c(string=C)","time":"2015-11-05T21:02:54+01:00"}
 {"level":"info","msg":"GET:/health from 127.0.0.1:57906","time":"2015-11-05T21:03:02+01:00"}
 {"level":"info","msg":"GET:/health from 127.0.0.1:57906","time":"2015-11-05T21:05:04+01:00"}
+{"level":"info","msg":"Apac path http://10.5.11.72:9080/apac/sync/plagiarism","time":"2015-11-16T18:28:12+01:00"}
+{"level":"info","msg":"Initializing storage","time":"2015-11-16T18:28:12+01:00"}
+{"level":"info","msg":"Initializing MongoDB\n\t\tConnection string: localhost:27017\n\t\tDatabase: plag\n\t\tAssignment collection: assignments\n\t\tSubmission collection: submissions","time":"2015-11-16T18:28:12+01:00"}
+{"level":"info","msg":"Apac path http://10.5.11.72:9080/apac/sync/plagiarism","time":"2015-11-16T18:28:46+01:00"}
+{"level":"info","msg":"Initializing storage","time":"2015-11-16T18:28:46+01:00"}
+{"level":"info","msg":"Initializing MongoDB\n\t\tConnection string: localhost:27017\n\t\tDatabase: plag\n\t\tAssignment collection: assignments\n\t\tSubmission collection: submissions","time":"2015-11-16T18:28:46+01:00"}
+{"level":"info","msg":"Apac path http://10.5.11.72:9080/apac/sync/plagiarism","time":"2015-11-16T18:29:10+01:00"}
+{"level":"info","msg":"Initializing storage","time":"2015-11-16T18:29:10+01:00"}
+{"level":"info","msg":"Initializing MongoDB\n\t\tConnection string: localhost:27017\n\t\tDatabase: plag\n\t\tAssignment collection: assignments\n\t\tSubmission collection: submissions","time":"2015-11-16T18:29:10+01:00"}
+{"level":"info","msg":"Loaded plugin for %!c(string=JAVA)","time":"2015-11-16T18:29:11+01:00"}
+{"level":"info","msg":"Loaded plugin for %!c(string=C)","time":"2015-11-16T18:29:11+01:00"}
+{"level":"info","msg":"Apac path http://10.5.11.72:9080/apac/sync/plagiarism","time":"2015-11-17T08:28:57+01:00"}
+{"level":"info","msg":"Initializing storage","time":"2015-11-17T08:28:57+01:00"}
+{"level":"info","msg":"Initializing MongoDB\n\t\tConnection string: localhost:27017\n\t\tDatabase: plag\n\t\tAssignment collection: assignments\n\t\tSubmission collection: submissions","time":"2015-11-17T08:28:57+01:00"}
+{"level":"info","msg":"Loaded plugin for %!c(string=JAVA)","time":"2015-11-17T08:28:57+01:00"}
+{"level":"info","msg":"Loaded plugin for %!c(string=C)","time":"2015-11-17T08:28:57+01:00"}
+{"level":"info","msg":"Apac path http://10.5.11.72:9080/apac/sync/plagiarism","time":"2015-12-19T17:54:26+01:00"}
+{"level":"info","msg":"Initializing storage","time":"2015-12-19T17:54:26+01:00"}
+{"level":"info","msg":"Initializing MongoDB\n\t\tConnection string: localhost:27017\n\t\tDatabase: plag\n\t\tAssignment collection: assignments\n\t\tSubmission collection: submissions","time":"2015-12-19T17:54:26+01:00"}
+{"level":"info","msg":"Apac path http://10.5.11.72:9080/apac/sync/plagiarism","time":"2015-12-19T17:55:32+01:00"}
+{"level":"info","msg":"Initializing storage","time":"2015-12-19T17:55:32+01:00"}
+{"level":"info","msg":"Initializing MongoDB\n\t\tConnection string: localhost:27017\n\t\tDatabase: plag\n\t\tAssignment collection: assignments\n\t\tSubmission collection: submissions","time":"2015-12-19T17:55:32+01:00"}
+{"level":"info","msg":"Loaded plugin for %!c(string=JAVA)","time":"2015-12-19T17:55:33+01:00"}
+{"level":"info","msg":"Loaded plugin for %!c(string=C)","time":"2015-12-19T17:55:33+01:00"}
+{"level":"info","msg":"GET:/health from 127.0.0.1:40570","time":"2015-12-19T17:55:57+01:00"}
+{"level":"info","msg":"GET:/health from 127.0.0.1:40570","time":"2015-12-19T17:56:01+01:00"}
+{"level":"info","msg":"GET:/health from 127.0.0.1:40570","time":"2015-12-19T17:56:04+01:00"}
+{"level":"info","msg":"GET:/health from 127.0.0.1:40654","time":"2015-12-19T18:30:33+01:00"}
