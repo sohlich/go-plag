@@ -44,9 +44,18 @@ type ApacConfig struct {
 	URL string
 }
 
+//ApacConfig holds the
+//configuration for APAC
+type ElasticConfig struct {
+	URL      string
+	Username string
+	Password string
+}
+
 type configFile struct {
-	Mongo  MongoConfig
-	Server ServerConfig
-	Log    LogConfig
-	Apac   ApacConfig
+	Mongo   MongoConfig
+	Server  ServerConfig
+	Log     LogConfig
+	Apac    ApacConfig
+	Elastic ElasticConfig
 }

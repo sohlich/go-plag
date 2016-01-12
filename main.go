@@ -7,11 +7,14 @@ import (
 	"runtime/pprof"
 	"time"
 
+	"gopkg.in/olivere/elastic.v3"
+
 	"code.google.com/p/gcfg"
 	log "github.com/Sirupsen/logrus"
 	expvarGin "github.com/gin-gonic/contrib/expvar"
 	"github.com/gin-gonic/gin"
 	"github.com/rifflock/lfshook"
+	"github.com/sohlich/elogrus"
 	"github.com/sohlich/go-plag/parser"
 	"github.com/sohlich/healthcheck"
 )
@@ -62,7 +65,7 @@ func main() {
 	//Load config
 	cfg := loadProperties(config)
 
-	Log = NewLogger(cfg.Log.Path)
+	Log = NewLogger(cfg)
 	Apac = cfg.Apac
 
 	Log.Infof("Apac path %s", Apac.URL)
@@ -118,18 +121,28 @@ func loadProperties(cfgFile string) configFile {
 
 //NewLogger creates a
 //logger  for logrus
-func NewLogger(path string) *log.Logger {
+func NewLogger(cfg configFile) *log.Logger {
 	//This creates new logger
 	Log = log.New()
 	Log.Formatter = new(log.JSONFormatter)
 	Log.Hooks.Add(lfshook.NewHook(lfshook.PathMap{
-		log.InfoLevel:  path,
-		log.ErrorLevel: path,
-		log.DebugLevel: path,
+		log.InfoLevel:  cfg.Log.Path,
+		log.ErrorLevel: cfg.Log.Path,
+		log.DebugLevel: cfg.Log.Path,
 	}))
 	Log.Hooks.Add(&metricsHook{
 		metrics,
 	})
+	client, err := elastic.NewClient(
+		elastic.SetURL(cfg.Elastic.URL),
+		elastic.SetBasicAuth(cfg.Elastic.Username, cfg.Elastic.Password))
+	if err != nil {
+		log.Error(err)
+	} else {
+		hook := elogrus.NewElasticHook(client, cfg.Server.Host, log.DebugLevel, "goplag")
+		Log.Hooks.Add(hook)
+	}
+
 	return Log
 }
 

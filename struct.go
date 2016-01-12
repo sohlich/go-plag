@@ -44,7 +44,7 @@ func (a *Assignment) Valid() bool {
 //for submission
 type SubmissionFile struct {
 	ID         bson.ObjectId `bson:"_id"`
-	Owner      string        `omitempty`
+	Owner      string
 	Name       string
 	Assignment string
 	Submission string
