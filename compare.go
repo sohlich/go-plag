@@ -89,6 +89,8 @@ func checkAssignment(assignment *Assignment) error {
 		return err
 	}
 
+	Log.Infof("Starting comparison of %d submissionFiles", len(submissionFiles))
+
 	//Pipe the tuples -> comparison
 	processChanel := generateTuples(ctx, submissionFiles)
 	outpuchannel := compareFiles(ctx, processChanel)

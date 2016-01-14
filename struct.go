@@ -62,7 +62,7 @@ func (sf *SubmissionFile) NewID() {
 
 //Submission is dto for REST
 type Submission struct {
-	ID           string
+	ID           string `json:"identificator"`
 	Owner        string
 	AssignmentID string
 	Lang         string

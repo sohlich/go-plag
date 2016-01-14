@@ -27,3 +27,16 @@ func TestJsonApac(t *testing.T) {
 		t.Error("Bad serialization output")
 	}
 }
+
+func TestJsonApacInput(t *testing.T) {
+	input := "{\"identificator\":\"123455\"}"
+
+	output := &Submission{}
+
+	json.Unmarshal([]byte(input), output)
+
+	if output.ID != "123455" {
+		t.Error("Bad deserialization")
+	}
+
+}

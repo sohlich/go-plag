@@ -16,6 +16,12 @@ import (
 
 var UnsupportedLangError = errors.New("Language not supported")
 
+var Log = log.StandardLogger()
+
+func SetLogger(logger *log.Logger) {
+	Log = logger
+}
+
 type Tokenizer interface {
 	ProcessFile(input io.Reader) (string, error)
 	ExtensionsFilter() map[string]bool
@@ -29,12 +35,14 @@ type Plugin struct {
 }
 
 func (p *Plugin) ProcessFile(input io.Reader) (string, error) {
+	Log.Infof("Executing plugin for %s", p.Language)
+
 	cmd := exec.Command("java", "-jar", p.Path, "parse")
 	cmd.Stdin = input
 	bs, err := cmd.CombinedOutput()
 	if err != nil {
-		cmd.Process.Signal(os.Kill)
-		Log.Errorf(string(bs))
+		// cmd.Process.Signal(os.Kill)
+		Log.Errorf("Java parser failed %s", string(bs))
 		return "", err
 	}
 	return string(bs), nil
@@ -43,12 +51,6 @@ func (p *Plugin) ProcessFile(input io.Reader) (string, error) {
 //Return the map of supported file extensions
 func (p *Plugin) ExtensionsFilter() map[string]bool {
 	return p.FileFilter
-}
-
-var Log = log.StandardLogger()
-
-func SetLogger(logger *log.Logger) {
-	Log = logger
 }
 
 //Returnd initalized Plugin struct pointer

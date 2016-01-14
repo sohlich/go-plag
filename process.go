@@ -19,6 +19,11 @@ var (
 //unzip, parse and save to database.
 func processSubmission(submission *Submission) error {
 
+	if exists, _ := mongo.FindBySubmissionID(submission.ID); len(submission.ID) > 0 && len(exists) > 0 {
+		Log.Infof("Submission %s has been processed in previous run ", submission.ID)
+		return nil
+	}
+
 	filter, err := parser.GetLangFileFilter(submission.Lang)
 	if err != nil {
 		return err
@@ -33,6 +38,8 @@ func processSubmission(submission *Submission) error {
 	//and save the files
 	var submissionID string
 	if len(submission.ID) > 0 {
+
+		Log.Infof("processSubmission: submission.ID exist %s", submission.ID)
 		submissionID = submission.ID
 	} else {
 		submissionID = uuid.NewV1().String()

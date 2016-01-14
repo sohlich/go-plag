@@ -1,3 +1,4 @@
 db.results.aggregate([
 	{$project:{"_id":0,"uuid":"$submission","uuid2":"$comparedTo.submission","similarity":1}},
-	{$group:{"_id":"$uuid","maxSim":{$max:"$similarity"},"similarities":{$addToSet:{"uuid":"$uuid2","similarity":"$similarity"}}}}]).pretty()
+	{$group:{"_id":{"uuid":"$uuid","uuid2":"$uuid2"},"similarity":{$max:"$similarity"}}},
+	{$group:{"_id":"$_id.uuid","maxSim":{$max:"$similarity"},"similarities":{$addToSet:{"uuid":"$_id.uuid2","similarity":"$similarity"}}}}]).pretty()

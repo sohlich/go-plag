@@ -20,6 +20,7 @@ type DataStorage interface {
 	FindAllSubmissionsByAssignment(assignmentID string) ([]SubmissionFile, error)
 	FindAllComparableSubmissionFiles(submissionfile *SubmissionFile) ([]SubmissionFile, error)
 	FindMaxSimilarityBySubmission(assignmentID string) ([]ApacPlagiarismSync, error)
+	FindBySubmissionID(submissionID string) ([]SubmissionFile, error)
 }
 
 //Mongo implements the storage
@@ -174,6 +175,12 @@ func (m *Mongo) FindAllSubmissionsByAssignment(assignmentID string) ([]Submissio
 	return result, err
 }
 
+func (m *Mongo) FindBySubmissionID(submissionID string) ([]SubmissionFile, error) {
+	var result []SubmissionFile
+	err := m.submissions.Find(bson.M{"submission": submissionID}).All(&result)
+	return result, err
+}
+
 //FindAllComparableSubmissionFiles finds
 //all files that shoudl be compared
 //to given SubmissionFile
@@ -190,7 +197,8 @@ func (m *Mongo) FindMaxSimilarityBySubmission(assignmentID string) ([]ApacPlagia
 	query := []bson.M{
 		{"$match": bson.M{"assignment": assignmentID}},
 		{"$project": bson.M{"_id": 0, "uuid": "$submission", "uuid2": "$comparedTo.submission", "similarity": 1}},
-		{"$group": bson.M{"_id": "$uuid", "similarity": bson.M{"$max": "$similarity"}, "submissions": bson.M{"$addToSet": bson.M{"uuid": "$uuid2", "similarity": "$similarity"}}}},
+		{"$group": bson.M{"_id": bson.M{"uuid": "$uuid", "uuid2": "$uuid2"}, "similarity": bson.M{"$max": "$similarity"}}},
+		{"$group": bson.M{"_id": "$_id.uuid", "similarity": bson.M{"$max": "$similarity"}, "submissions": bson.M{"$addToSet": bson.M{"uuid": "$_id.uuid2", "similarity": "$similarity"}}}},
 		{"$project": bson.M{"_id": 0, "baseuuid": "$_id", "similarity": 1, "submissions": 1}},
 	}
 	var qryRes []ApacPlagiarismSync

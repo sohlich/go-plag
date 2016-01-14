@@ -139,8 +139,13 @@ func NewLogger(cfg configFile) *log.Logger {
 	if err != nil {
 		log.Error(err)
 	} else {
-		hook := elogrus.NewElasticHook(client, cfg.Server.Host, log.DebugLevel, "goplag")
-		Log.Hooks.Add(hook)
+		hook, err := elogrus.NewElasticHook(client, cfg.Server.Host, log.DebugLevel, "goplag")
+		if err != nil {
+			log.Error(err)
+		} else {
+			Log.Hooks.Add(hook)
+		}
+
 	}
 
 	return Log

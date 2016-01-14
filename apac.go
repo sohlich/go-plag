@@ -9,6 +9,7 @@ import (
 
 func syncWithApac(assignmentID string) error {
 	result, err := mongo.FindMaxSimilarityBySubmission(assignmentID)
+
 	if err != nil {
 		return err
 	}
@@ -16,7 +17,9 @@ func syncWithApac(assignmentID string) error {
 	if err != nil {
 		return err
 	}
-	Log.Infof("Syncing to APAC %v", string(byteBody))
+
+	Log.Infof(string(byteBody))
+
 	reader := bytes.NewReader(byteBody)
 	res, apacErr := http.Post(Apac.URL, "application/json", reader)
 	if res != nil {
