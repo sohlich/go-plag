@@ -27,6 +27,10 @@ func (f *FakeDataStorage) FindOneAssignmentByID(id string) (*Assignment, error) 
 	}, nil
 }
 
+func (f *FakeDataStorage) FindBySubmissionID(id string) ([]SubmissionFile, error) {
+	return make([]SubmissionFile, 0), nil
+}
+
 func (f *FakeDataStorage) FindSubmissionFileByID(id string) (*SubmissionFile, error) {
 	fileOne := &SubmissionFile{
 
